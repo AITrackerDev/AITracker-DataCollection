@@ -1,6 +1,8 @@
 # This is the data collection application of our program
 # All this does is take a picture and saves it to the folder "data_images"
 import customtkinter as ctk
+import h5py
+import numpy as np
 
 #global height and width variables
 WIDTH = 720
@@ -63,6 +65,27 @@ app.bind("<Key-space>", dataCollectionFunction)
     camera footage in the screen
     space button captures photo and saves it to data_images
 """
+
+#create example hdf5 file
+fileW = h5py.File("example.hdf5", "w")
+
+dataset = fileW.create_dataset("data", shape=(10,), dtype='i')
+
+for i in range(10):
+    dataset[i] = i
+
+fileW.close()
+
+#read example hdf5 file after it is created
+fileR = h5py.File("example.hdf5", "r")
+
+dataset = fileR["data"]
+data = np.array(dataset)
+
+fileR.close()
+
+print("Example Data:")
+print(data)
 
 #program finished frame
 """
