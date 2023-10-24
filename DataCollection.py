@@ -6,12 +6,14 @@ import numpy as np
 import cv2
 from PIL import Image, ImageTk
 
-WIDTH, HEIGHT = 720, 480
+WIDTH, HEIGHT = 1080, 720
 currentFrame = 0
 img_counter = 0
 cam = cv2.VideoCapture(0)
+
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
+img_frame = 0
 
 # app window setup
 ctk.set_appearance_mode("dark")
@@ -35,7 +37,7 @@ instructionsString = "After clicking continue, the app will generate a random do
 def load_frame(destroy_frame, next_frame):
     # sets the currentFrame variable to the one that's loaded
     global currentFrame
-    currentFrame = load_frame
+    currentFrame = next_frame
     # destroys the previous frame and loads the next one
     destroy_frame.destroy()
     next_frame.pack()
@@ -43,33 +45,37 @@ def load_frame(destroy_frame, next_frame):
 
 # function that loads and takes pictures when the dataFrame is loaded
 def update_camera():
-    global img_counter
-    global currentFrame
+    global img_frame
     ret, frame = cam.read()
 
     if ret:
+        frame = cv2.flip(frame, 1)
+        img_frame = frame
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
         img = ImageTk.PhotoImage(image=img)
         dataLabel.configure(image=img)
         dataLabel.image = img
-
-    if currentFrame == dataFrame and cv2.waitKey(1) % 256 == 32:
+    dataLabel.after(7, update_camera)
+    
+def take_picture(event):
+    global img_counter
+    global currentFrame
+    if currentFrame == dataFrame:
         # the format for storing the images
         img_name = f'opencv_frame_{img_counter}'
         # saves the image as a png file
-        cv2.imwrite(img_name + ".png", frame)
+        cv2.imwrite(img_name + ".png", img_frame)
         print('screenshot taken')
         # the number of images automatically increases by 1
         img_counter += 1
-    dataLabel.after(15, update_camera)
-
 
 # widgets contained in each frame
 # consent frame
 consentText = ctk.CTkLabel(consentFrame, text=consentString)
 consentText.configure(wraplength=500)
-consentButton = ctk.CTkButton(consentFrame, text="Consent", corner_radius=10, command=lambda: load_frame(consentFrame, instructionsFrame))
+consentButton = ctk.CTkButton(consentFrame, text="Consent", corner_radius=10,
+                              command=lambda: load_frame(consentFrame, instructionsFrame))
 quitButton = ctk.CTkButton(consentFrame, text="Quit", corner_radius=10, command=lambda: app.destroy())
 
 consentText.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
@@ -86,6 +92,7 @@ instructionsLabel.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
 instructionsButton.place(relx=.5, rely=0.9, anchor=ctk.CENTER)
 
 # data collection frame
+app.bind("<Key-space>", take_picture)
 dataLabel = ctk.CTkLabel(dataFrame, text="")
 dataLabel.grid(column=0, row=0)
 
@@ -122,6 +129,7 @@ print(data)
         if it fails
             quit
 """
-update_camera()
 consentFrame.pack()
+update_camera()
 app.mainloop()
+cam.release()
