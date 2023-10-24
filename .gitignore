@@ -9,5 +9,6 @@ out/
 TestResources/
 _site
 .DS_Store
-*.vscode
+.vscode
 *.hdf5
+.idea
