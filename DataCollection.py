@@ -6,14 +6,16 @@ import numpy as np
 import cv2
 from PIL import Image, ImageTk
 
+# application setup variables
 WIDTH, HEIGHT = 1080, 720
-currentFrame = 0
-img_counter = 0
-cam = cv2.VideoCapture(0)
+current_frame = 0
 
+# webcam and current image frame setup
+cam = cv2.VideoCapture(0)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
 img_frame = 0
+img_counter = 0
 
 # app window setup
 ctk.set_appearance_mode("dark")
@@ -23,45 +25,52 @@ app.geometry(str(WIDTH) + "x" + str(HEIGHT))
 app.title("aiTracker Data Collection")
 
 # frame instantiations
-consentFrame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
-instructionsFrame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
-dataFrame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
-endFrame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
+consent_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
+instructions_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
+data_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
+end_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 
 # strings for the different frames
-consentString = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
-instructionsString = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times."
+consent_string = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
+instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times."
 
 
 # button functions
 def load_frame(destroy_frame, next_frame):
     # sets the currentFrame variable to the one that's loaded
-    global currentFrame
-    currentFrame = next_frame
+    global current_frame
+    current_frame = next_frame
     # destroys the previous frame and loads the next one
     destroy_frame.destroy()
     next_frame.pack()
 
-
-# function that loads and takes pictures when the dataFrame is loaded
+# updates the camera
 def update_camera():
     global img_frame
+    
+    #reads data from the camera
     ret, frame = cam.read()
 
     if ret:
+        # flip image
         frame = cv2.flip(frame, 1)
+        # set the current image to the flipped one
         img_frame = frame
+        # convert the image so it can be displayed using the data_frame label
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
         img = ImageTk.PhotoImage(image=img)
-        dataLabel.configure(image=img)
-        dataLabel.image = img
-    dataLabel.after(7, update_camera)
+        data_label.configure(image=img)
+        data_label.image = img
+    # after a defined number of milliseconds, run this function again
+    data_label.after(7, update_camera)
     
 def take_picture(event):
     global img_counter
-    global currentFrame
-    if currentFrame == dataFrame:
+    global current_frame
+    
+    #if the data frame is currently loaded, save a picture
+    if current_frame == data_frame:
         # the format for storing the images
         img_name = f'opencv_frame_{img_counter}'
         # saves the image as a png file
@@ -72,29 +81,29 @@ def take_picture(event):
 
 # widgets contained in each frame
 # consent frame
-consentText = ctk.CTkLabel(consentFrame, text=consentString)
-consentText.configure(wraplength=500)
-consentButton = ctk.CTkButton(consentFrame, text="Consent", corner_radius=10,
-                              command=lambda: load_frame(consentFrame, instructionsFrame))
-quitButton = ctk.CTkButton(consentFrame, text="Quit", corner_radius=10, command=lambda: app.destroy())
+consent_text = ctk.CTkLabel(consent_frame, text=consent_string)
+consent_text.configure(wraplength=500)
+consent_button = ctk.CTkButton(consent_frame, text="Consent", corner_radius=10,
+                              command=lambda: load_frame(consent_frame, instructions_frame))
+quit_button = ctk.CTkButton(consent_frame, text="Quit", corner_radius=10, command=lambda: app.destroy())
 
-consentText.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
-consentButton.place(relx=.75, rely=0.9, anchor=ctk.CENTER)
-quitButton.place(relx=.25, rely=0.9, anchor=ctk.CENTER)
+consent_text.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
+consent_button.place(relx=.75, rely=0.9, anchor=ctk.CENTER)
+quit_button.place(relx=.25, rely=0.9, anchor=ctk.CENTER)
 
 # instructions frame
-instructionsLabel = ctk.CTkLabel(instructionsFrame, text=instructionsString)
-instructionsLabel.configure(wraplength=500)
-instructionsButton = ctk.CTkButton(instructionsFrame, text="Continue", corner_radius=10,
-                                   command=lambda: load_frame(instructionsFrame, dataFrame))
+instructions_label = ctk.CTkLabel(instructions_frame, text=instructions_string)
+instructions_label.configure(wraplength=500)
+instructions_button = ctk.CTkButton(instructions_frame, text="Continue", corner_radius=10,
+                                   command=lambda: load_frame(instructions_frame, data_frame))
 
-instructionsLabel.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
-instructionsButton.place(relx=.5, rely=0.9, anchor=ctk.CENTER)
+instructions_label.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
+instructions_button.place(relx=.5, rely=0.9, anchor=ctk.CENTER)
 
 # data collection frame
 app.bind("<Key-space>", take_picture)
-dataLabel = ctk.CTkLabel(dataFrame, text="")
-dataLabel.grid(column=0, row=0)
+data_label = ctk.CTkLabel(data_frame, text="")
+data_label.grid(column=0, row=0)
 
 # create example hdf5 file
 fileW = h5py.File("example.hdf5", "w")
@@ -129,7 +138,7 @@ print(data)
         if it fails
             quit
 """
-consentFrame.pack()
+consent_frame.pack()
 update_camera()
 app.mainloop()
 cam.release()
