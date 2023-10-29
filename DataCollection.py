@@ -4,10 +4,13 @@ import customtkinter as ctk
 import h5py
 import numpy as np
 import cv2
+import random as rand
+import math
 from PIL import Image, ImageTk
 
 # application setup variables
 WIDTH, HEIGHT = 1080, 720
+ASSETS_PATH = "assets/"
 current_frame = 0
 
 # webcam and current image frame setup
@@ -24,6 +27,13 @@ app = ctk.CTk()
 app.geometry(str(WIDTH) + "x" + str(HEIGHT))
 app.title("aiTracker Data Collection")
 
+# dot information
+dot_picture = Image.open(ASSETS_PATH + "dot.png")
+dot_image = ImageTk.PhotoImage(dot_picture)
+dot_x = 0
+dot_y = 0
+current_direction = None
+
 # frame instantiations
 consent_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 instructions_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
@@ -32,8 +42,7 @@ end_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 
 # strings for the different frames
 consent_string = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
-instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times."
-
+instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times. The window will automatically maximize as well."
 
 # button functions
 def load_frame(destroy_frame, next_frame):
@@ -64,13 +73,16 @@ def update_camera():
         data_label.image = img
     # after a defined number of milliseconds, run this function again
     data_label.after(7, update_camera)
-    
+
+# takes a picture when the space bar is pressed   
 def take_picture(event):
     global img_counter
     global current_frame
     
     #if the data frame is currently loaded, save a picture
     if current_frame == data_frame:
+        generate_dot_position()
+        dot_label.place(x=dot_x, y=dot_y)
         # the format for storing the images
         img_name = f'opencv_frame_{img_counter}'
         # saves the image as a png file
@@ -78,6 +90,36 @@ def take_picture(event):
         print('screenshot taken')
         # the number of images automatically increases by 1
         img_counter += 1
+        
+def determine_direction(x, y):
+    rect_width =  math.floor(WIDTH/3)
+    rect_height = math.floor(HEIGHT/3)
+    if x < rect_width and y < rect_height:
+        return "north west"
+    elif x < rect_width and y < 2 * rect_height and y > rect_height:
+        return "west"
+    elif x < rect_width and y < 3 * rect_height and y > 2 * rect_height:
+        return "south west"
+    elif x < 2 * rect_width and x > rect_width and y < rect_height:
+        return "north"
+    elif x < 2 * rect_width and x > rect_width and y < 2 * rect_height and y > rect_height:
+        return "center"
+    elif x < 2 * rect_width and x > rect_width and y < 3 * rect_height and y > 2 * rect_height:
+        return "south"
+    elif x < 3 * rect_width and x > 2 * rect_width and y < rect_height:
+        return "north east"
+    elif x < 3 * rect_width and x > 2 * rect_width and y < 2 * rect_height and y > rect_height:
+        return "east"
+    elif x < 3 * rect_width and x > 2 * rect_width and y < 3 * rect_height and y > 2 * rect_height: 
+        return "south east"
+
+def generate_dot_position():
+    global dot_x
+    global dot_y
+    dot_x = rand.randint(0, WIDTH - dot_picture.width)
+    dot_y = rand.randint(0, HEIGHT - dot_picture.height)
+    current_direction = determine_direction(dot_x, dot_y)
+    print(current_direction)
 
 # widgets contained in each frame
 # consent frame
@@ -103,6 +145,8 @@ instructions_button.place(relx=.5, rely=0.9, anchor=ctk.CENTER)
 # data collection frame
 app.bind("<Key-space>", take_picture)
 data_label = ctk.CTkLabel(data_frame, text="")
+dot_label = ctk.CTkLabel(data_frame, text="")
+dot_label.configure(image=dot_image)
 data_label.grid(column=0, row=0)
 
 # create example hdf5 file
@@ -140,5 +184,7 @@ print(data)
 """
 consent_frame.pack()
 update_camera()
+generate_dot_position()
+dot_label.place(x=dot_x, y=dot_y)
 app.mainloop()
 cam.release()
