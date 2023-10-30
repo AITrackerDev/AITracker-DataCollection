@@ -56,7 +56,7 @@ def load_frame(destroy_frame, next_frame):
 # updates the camera
 def update_camera():
     global img_frame
-    
+
     #reads data from the camera
     ret, frame = cam.read()
 
@@ -74,12 +74,13 @@ def update_camera():
     # after a defined number of milliseconds, run this function again
     data_label.after(7, update_camera)
 
-# takes a picture when the space bar is pressed   
+
+# takes a picture when the space bar is pressed
 def take_picture(event):
     global img_counter
     global current_frame
-    
-    #if the data frame is currently loaded, save a picture
+
+    # if the data frame is currently loaded, save a picture
     if current_frame == data_frame:
         generate_dot_position()
         dot_label.place(x=dot_x, y=dot_y)
@@ -90,7 +91,7 @@ def take_picture(event):
         print('screenshot taken')
         # the number of images automatically increases by 1
         img_counter += 1
-        
+
 def determine_direction(x, y):
     rect_width =  math.floor(WIDTH/3)
     rect_height = math.floor(HEIGHT/3)
@@ -110,8 +111,9 @@ def determine_direction(x, y):
         return "north east"
     elif x < 3 * rect_width and x > 2 * rect_width and y < 2 * rect_height and y > rect_height:
         return "east"
-    elif x < 3 * rect_width and x > 2 * rect_width and y < 3 * rect_height and y > 2 * rect_height: 
+    elif x < 3 * rect_width and x > 2 * rect_width and y < 3 * rect_height and y > 2 * rect_height:
         return "south east"
+
 
 def generate_dot_position():
     global dot_x
@@ -120,6 +122,7 @@ def generate_dot_position():
     dot_y = rand.randint(0, HEIGHT - dot_picture.height)
     current_direction = determine_direction(dot_x, dot_y)
     print(current_direction)
+    return current_direction
 
 # widgets contained in each frame
 # consent frame
@@ -188,3 +191,62 @@ generate_dot_position()
 dot_label.place(x=dot_x, y=dot_y)
 app.mainloop()
 cam.release()
+
+# def take_picture(event):
+#     global n_counter
+#     global nw_counter
+#     global ne_counter
+#     global w_counter
+#     global e_counter
+#     global sw_counter
+#     global se_counter
+#     global s_counter
+#     global c_counter
+#     global current_frame
+#     global img_name
+#
+#     n_counter = 0
+#     nw_counter = 0
+#     ne_counter = 0
+#     w_counter = 0
+#     e_counter = 0
+#     sw_counter = 0
+#     se_counter = 0
+#     s_counter = 0
+#     c_counter = 0
+#
+#
+#     #if the data frame is currently loaded, save a picture
+#     if current_frame == data_frame:
+#         direction = d #generate_dot_position()
+#         dot_label.place(x=dot_x, y=dot_y)
+#         # the format for storing the images
+#
+#         if direction == "north":
+#             n_counter += 1
+#             img_name = f'north{n_counter}'
+#         elif direction == "north west":
+#             nw_counter += 1
+#             img_name = f'northwest{nw_counter}'
+#         elif direction == "north east":
+#             ne_counter += 1
+#             img_name = f'northeast{ne_counter}'
+#         elif direction == "west":
+#             w_counter += 1
+#             img_name = f'west{w_counter}'
+#         elif direction == "south west":
+#             sw_counter += 1
+#             img_name = f'southwest{sw_counter}'
+#         elif direction == "south east":
+#             se_counter += 1
+#             img_name = f'southeast{se_counter}'
+#         elif direction == "south":
+#             s_counter += 1
+#             img_name = f'south{s_counter}'
+#         elif direction == "center":
+#             c_counter += 1
+#             img_name = f'center{c_counter}'
+#
+#         # saves the image as a png file
+#         cv2.imwrite(img_name + ".png", img_frame)
+#         print('screenshot taken')
