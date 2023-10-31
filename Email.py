@@ -5,7 +5,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 subject = "AI Data"
-body = "Test Email"
+body = "AI Training Data"
 sender = "eyetrackerdata@gmail.com"
 recipients = "eyetrackercollection@gmail.com"
 password = "kjio oydv zphc tkdi"
@@ -20,10 +20,7 @@ msg['From'] = sender
 msg['To'] = recipients
 
 # storing the subject
-msg['Subject'] = "Test Mail"
-
-# string to store the body of the mail
-body = "Test Email"
+msg['Subject'] = subject
 
 # attach the body with the msg instance
 msg.attach(MIMEText(body, 'plain'))

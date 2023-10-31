@@ -7,6 +7,11 @@ import cv2
 import random as rand
 import math
 from PIL import Image, ImageTk
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
 
 # application setup variables
 WIDTH, HEIGHT = 1080, 720
@@ -26,6 +31,28 @@ ctk.set_default_color_theme("blue")
 app = ctk.CTk()
 app.geometry(str(WIDTH) + "x" + str(HEIGHT))
 app.title("aiTracker Data Collection")
+
+# counter information
+global direction
+global n_counter
+global nw_counter
+global ne_counter
+global w_counter
+global e_counter
+global sw_counter
+global se_counter
+global s_counter
+global c_counter
+
+n_counter = 0
+nw_counter = 0
+ne_counter = 0
+w_counter = 0
+e_counter = 0
+sw_counter = 0
+se_counter = 0
+s_counter = 0
+c_counter = 0
 
 # dot information
 dot_picture = Image.open(ASSETS_PATH + "dot.png")
@@ -65,7 +92,7 @@ def update_camera():
         frame = cv2.flip(frame, 1)
         # set the current image to the flipped one
         img_frame = frame
-        # convert the image so it can be displayed using the data_frame label
+        # convert the image, so it can be displayed using the data_frame label
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = Image.fromarray(img)
         img = ImageTk.PhotoImage(image=img)
@@ -76,21 +103,79 @@ def update_camera():
 
 
 # takes a picture when the space bar is pressed
-def take_picture(event):
-    global img_counter
-    global current_frame
+# def take_picture(event):
+#     global img_counter
+#     global current_frame
+#
+#     # if the data frame is currently loaded, save a picture
+#     if current_frame == data_frame:
+#         generate_dot_position()
+#         dot_label.place(x=dot_x, y=dot_y)
+#         # the format for storing the images
+#         img_name = f'opencv_frame_{img_counter}'
+#         # saves the image as a png file
+#         cv2.imwrite(img_name + ".png", img_frame)
+#         print('screenshot taken')
+#         # the number of images automatically increases by 1
+#         img_counter += 1
 
-    # if the data frame is currently loaded, save a picture
+
+def take_picture(event):
+    global direction
+    global n_counter
+    global nw_counter
+    global ne_counter
+    global w_counter
+    global e_counter
+    global sw_counter
+    global se_counter
+    global s_counter
+    global c_counter
+    global current_frame
+    global img_name
+
+    #if the data frame is currently loaded, save a picture
     if current_frame == data_frame:
-        generate_dot_position()
-        dot_label.place(x=dot_x, y=dot_y)
         # the format for storing the images
-        img_name = f'opencv_frame_{img_counter}'
+
+        if direction == "north":
+            n_counter += 1
+            img_name = f'north{n_counter}.png'
+        elif direction == "north west":
+            nw_counter += 1
+            img_name = f'northwest{nw_counter}.png'
+        elif direction == "north east":
+            ne_counter += 1
+            img_name = f'northeast{ne_counter}.png'
+        elif direction == "west":
+            w_counter += 1
+            img_name = f'west{w_counter}.png'
+        elif direction == "east":
+            e_counter += 1
+            img_name = f'east{e_counter}.png'
+        elif direction == "south west":
+            sw_counter += 1
+            img_name = f'southwest{sw_counter}.png'
+        elif direction == "south east":
+            se_counter += 1
+            img_name = f'southeast{se_counter}.png'
+        elif direction == "south":
+            s_counter += 1
+            img_name = f'south{s_counter}.png'
+        elif direction == "center":
+            c_counter += 1
+            img_name = f'center{c_counter}.png'
+
         # saves the image as a png file
-        cv2.imwrite(img_name + ".png", img_frame)
+        cv2.imwrite(img_name, img_frame)
+
+        # sends png as email
+        sendEmail(img_name)
+
+        direction = generate_dot_position()
+        dot_label.place(x=dot_x, y=dot_y)
         print('screenshot taken')
-        # the number of images automatically increases by 1
-        img_counter += 1
+
 
 def determine_direction(x, y):
     rect_width =  math.floor(WIDTH/3)
@@ -123,6 +208,63 @@ def generate_dot_position():
     current_direction = determine_direction(dot_x, dot_y)
     print(current_direction)
     return current_direction
+def sendEmail(path):
+    subject = "AI_Data"
+    body = "AI Training Data"
+    sender = "eyetrackerdata@gmail.com"
+    recipients = "eyetrackercollection@gmail.com"
+    password = "kjio oydv zphc tkdi"
+
+    # instance of MIMEMultipart
+    msg = MIMEMultipart()
+
+    # storing the senders email address
+    msg['From'] = sender
+
+    # storing the receivers email address
+    msg['To'] = recipients
+
+    # storing the subject
+    msg['Subject'] = subject
+
+    # attach the body with the msg instance
+    msg.attach(MIMEText(body, 'plain'))
+
+    # open the file to be sent
+    filename = path
+    attachment = open(filename, "rb")
+
+    # instance of MIMEBase and named as p
+    p = MIMEBase('image', 'plain')
+
+    # To change the payload into encoded form
+    p.set_payload(attachment.read())
+
+    # encode into base64
+    encoders.encode_base64(p)
+
+    p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+
+    # attach the instance 'p' to instance 'msg'
+    msg.attach(p)
+
+    # creates SMTP session
+    s = smtplib.SMTP('smtp.gmail.com', 587)
+
+    # start TLS for security
+    s.starttls()
+
+    # Authentication
+    s.login(sender, password)
+
+    # Converts the Multipart msg into a string
+    text = msg.as_string()
+
+    # sending the mail
+    s.sendmail(sender, recipients, text)
+
+    # terminating the session
+    s.quit()
 
 # widgets contained in each frame
 # consent frame
@@ -146,6 +288,7 @@ instructions_label.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
 instructions_button.place(relx=.5, rely=0.9, anchor=ctk.CENTER)
 
 # data collection frame
+direction = generate_dot_position()
 app.bind("<Key-space>", take_picture)
 data_label = ctk.CTkLabel(data_frame, text="")
 dot_label = ctk.CTkLabel(data_frame, text="")
@@ -187,7 +330,7 @@ print(data)
 """
 consent_frame.pack()
 update_camera()
-generate_dot_position()
+# direction = generate_dot_position()
 dot_label.place(x=dot_x, y=dot_y)
 app.mainloop()
 cam.release()
