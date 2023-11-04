@@ -17,6 +17,7 @@ from email import encoders
 WIDTH, HEIGHT = 1080, 720
 ASSETS_PATH = "assets/"
 current_frame = 0
+STATIC_DOT = False
 
 # webcam and current image frame setup
 cam = cv2.VideoCapture(0)
@@ -33,17 +34,6 @@ app.geometry(str(WIDTH) + "x" + str(HEIGHT))
 app.title("aiTracker Data Collection")
 
 # counter information
-global direction
-global n_counter
-global nw_counter
-global ne_counter
-global w_counter
-global e_counter
-global sw_counter
-global se_counter
-global s_counter
-global c_counter
-
 n_counter = 0
 nw_counter = 0
 ne_counter = 0
@@ -59,7 +49,7 @@ dot_picture = Image.open(ASSETS_PATH + "dot.png")
 dot_image = ImageTk.PhotoImage(dot_picture)
 dot_x = 0
 dot_y = 0
-current_direction = None
+current_direction = True
 
 # frame instantiations
 consent_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
@@ -83,7 +73,8 @@ def load_frame(destroy_frame, next_frame):
 # updates the camera
 def update_camera():
     global img_frame
-
+    global img_counter
+    
     #reads data from the camera
     ret, frame = cam.read()
 
@@ -100,25 +91,13 @@ def update_camera():
         data_label.image = img
     # after a defined number of milliseconds, run this function again
     data_label.after(7, update_camera)
-
-
-# takes a picture when the space bar is pressed
-# def take_picture(event):
-#     global img_counter
-#     global current_frame
-#
-#     # if the data frame is currently loaded, save a picture
-#     if current_frame == data_frame:
-#         generate_dot_position()
-#         dot_label.place(x=dot_x, y=dot_y)
-#         # the format for storing the images
-#         img_name = f'opencv_frame_{img_counter}'
-#         # saves the image as a png file
-#         cv2.imwrite(img_name + ".png", img_frame)
-#         print('screenshot taken')
-#         # the number of images automatically increases by 1
-#         img_counter += 1
-
+    
+    if img_counter == 50: 
+        load_frame(data_frame, end_frame)
+        cam.release()
+        '''
+        write email received logic here
+        '''
 
 def take_picture(event):
     global direction
@@ -132,37 +111,42 @@ def take_picture(event):
     global s_counter
     global c_counter
     global current_frame
-    global img_name
+    global img_frame
+    global dot_x
+    global dot_y
+    global current_direction
+    global img_counter
 
     #if the data frame is currently loaded, save a picture
     if current_frame == data_frame:
         # the format for storing the images
-
-        if direction == "north":
+        img_counter += 1
+        img_name = "unknown.png"
+        if current_direction == "north":
             n_counter += 1
             img_name = f'north{n_counter}.png'
-        elif direction == "north west":
+        elif current_direction == "north west":
             nw_counter += 1
             img_name = f'northwest{nw_counter}.png'
-        elif direction == "north east":
+        elif current_direction == "north east":
             ne_counter += 1
             img_name = f'northeast{ne_counter}.png'
-        elif direction == "west":
+        elif current_direction == "west":
             w_counter += 1
             img_name = f'west{w_counter}.png'
-        elif direction == "east":
+        elif current_direction == "east":
             e_counter += 1
             img_name = f'east{e_counter}.png'
-        elif direction == "south west":
+        elif current_direction == "south west":
             sw_counter += 1
             img_name = f'southwest{sw_counter}.png'
-        elif direction == "south east":
+        elif current_direction == "south east":
             se_counter += 1
             img_name = f'southeast{se_counter}.png'
-        elif direction == "south":
+        elif current_direction == "south":
             s_counter += 1
             img_name = f'south{s_counter}.png'
-        elif direction == "center":
+        elif current_direction == "center":
             c_counter += 1
             img_name = f'center{c_counter}.png'
 
@@ -172,42 +156,102 @@ def take_picture(event):
         # sends png as email
         sendEmail(img_name)
 
-        direction = generate_dot_position()
+        current_direction = generate_dot_position()
         dot_label.place(x=dot_x, y=dot_y)
         print('screenshot taken')
 
-
 def determine_direction(x, y):
-    rect_width =  math.floor(WIDTH/3)
-    rect_height = math.floor(HEIGHT/3)
+    div_amount = 8
+    rect_width =  math.floor(WIDTH/div_amount)
+    rect_height = math.floor(HEIGHT/div_amount)
     if x < rect_width and y < rect_height:
         return "north west"
-    elif x < rect_width and y < 2 * rect_height and y > rect_height:
+    elif x < rect_width and y < (div_amount - 1) * rect_height and y > rect_height:
         return "west"
-    elif x < rect_width and y < 3 * rect_height and y > 2 * rect_height:
+    elif x < rect_width and y < (div_amount) * rect_height and y > (div_amount - 1) * rect_height:
         return "south west"
-    elif x < 2 * rect_width and x > rect_width and y < rect_height:
+    elif x < (div_amount - 1) * rect_width and x > rect_width and y < rect_height:
         return "north"
-    elif x < 2 * rect_width and x > rect_width and y < 2 * rect_height and y > rect_height:
+    elif x < (div_amount - 5) * rect_width and x > (div_amount - 3) * rect_width and y < (div_amount - 5) * rect_height and y > (div_amount - 3) * rect_height:
         return "center"
-    elif x < 2 * rect_width and x > rect_width and y < 3 * rect_height and y > 2 * rect_height:
+    elif x < (div_amount - 1) * rect_width and x > rect_width and y < (div_amount) * rect_height and y > (div_amount - 1) * rect_height:
         return "south"
-    elif x < 3 * rect_width and x > 2 * rect_width and y < rect_height:
+    elif x < 3 * rect_width and x > (div_amount - 1) * rect_width and y < rect_height:
         return "north east"
-    elif x < 3 * rect_width and x > 2 * rect_width and y < 2 * rect_height and y > rect_height:
+    elif x < 3 * rect_width and x > (div_amount - 1) * rect_width and y < (div_amount - 1) * rect_height and y > rect_height:
         return "east"
-    elif x < 3 * rect_width and x > 2 * rect_width and y < 3 * rect_height and y > 2 * rect_height:
+    elif x < (div_amount) * rect_width and x > (div_amount - 1) * rect_width and y < (div_amount) * rect_height and y > (div_amount - 1) * rect_height:
         return "south east"
-
+    else:
+        return "unknown"
 
 def generate_dot_position():
     global dot_x
     global dot_y
-    dot_x = rand.randint(0, WIDTH - dot_picture.width)
-    dot_y = rand.randint(0, HEIGHT - dot_picture.height)
+    
+    #spawns the dot at a random static point within the window
+    if STATIC_DOT:
+        dir = rand.randint(0, 8)
+        if dir == 0:
+            dot_x = 0
+            dot_y = 0
+        elif dir == 1:
+            dot_x = (WIDTH/2) - (dot_picture.width/2)
+            dot_y = 0 
+        elif dir == 2:
+            dot_x = WIDTH - dot_picture.width
+            dot_y = 0
+        elif dir == 3:
+            dot_x = 0
+            dot_y = (HEIGHT/2) - (dot_picture.height/2)
+        elif dir == 4:
+            dot_x = (WIDTH/2) - (dot_picture.width/2)
+            dot_y = (HEIGHT/2) - (dot_picture.height/2)
+        elif dir == 5:
+            dot_x = WIDTH - dot_picture.width
+            dot_y = (HEIGHT/2) - (dot_picture.height/2)
+        elif dir == 6:
+            dot_x = 0
+            dot_y = HEIGHT - dot_picture.height
+        elif dir == 7:
+            dot_x = (WIDTH/2) - (dot_picture.width/2)
+            dot_y = HEIGHT - dot_picture.height
+        elif dir == 8:
+            dot_x = WIDTH - dot_picture.width
+            dot_y = HEIGHT - dot_picture.height
+    else:
+        #divisions of the screen
+        div_amount = 8
+        x_div = WIDTH/div_amount
+        y_div = HEIGHT/div_amount
+        
+        #determines the direction to spawn the dot in 
+        dir = rand.randint(0, 4)
+        if dir == 0:
+            dot_x = rand.randint(0, x_div)
+            dot_y = rand.randint(0, HEIGHT)   
+        elif dir == 1:
+            dot_x = rand.randint((div_amount - 1) * x_div, WIDTH)
+            dot_y = rand.randint(0, HEIGHT)
+        elif dir == 2:
+            dot_x = rand.randint(0, WIDTH)
+            dot_y = rand.randint(0, y_div) 
+        elif dir == 3:
+            dot_x = rand.randint(0, WIDTH)
+            dot_y = rand.randint((div_amount - 1) * y_div, HEIGHT)
+        elif dir == 4:
+            dot_x = rand.randint((div_amount - 5) * x_div, (div_amount - 3) * x_div)
+            dot_y = rand.randint((div_amount - 5) * y_div, (div_amount - 3) * y_div)
+
+        #check if the dot will be invisible on the screen and modify the corresponding value
+        if dot_x + dot_picture.width > WIDTH:
+            dot_x = WIDTH - dot_picture.width
+        if dot_y + dot_picture.height > HEIGHT:
+            dot_y = HEIGHT - dot_picture.height
     current_direction = determine_direction(dot_x, dot_y)
     print(current_direction)
     return current_direction
+
 def sendEmail(path):
     subject = "AI_Data"
     body = "AI Training Data"
@@ -317,23 +361,15 @@ print("Example Data:")
 print(data)
 
 # program finished frame
-"""
-    if data has been sent successfully
-        display text that it is safe to close the app
-        display button that quits the app
-    else
-        show loading circle animation
-        show text saying it is sending
-        (update when it does send)
-        if it fails
-            quit
-"""
+finished_text = ctk.CTkLabel(text = "Thank you for helping us collect data for our neural network! The app will close automatically when the data has finished sending.")
+finished_text.place(relx=.5, rely=.5, anchor=ctk.CENTER)
+
+# application start code
 consent_frame.pack()
 update_camera()
-# direction = generate_dot_position()
+current_direction = generate_dot_position()
 dot_label.place(x=dot_x, y=dot_y)
 app.mainloop()
-cam.release()
 
 # def take_picture(event):
 #     global n_counter
@@ -393,3 +429,20 @@ cam.release()
 #         # saves the image as a png file
 #         cv2.imwrite(img_name + ".png", img_frame)
 #         print('screenshot taken')
+
+# takes a picture when the space bar is pressed
+# def take_picture(event):
+#     global img_counter
+#     global current_frame
+#
+#     # if the data frame is currently loaded, save a picture
+#     if current_frame == data_frame:
+#         generate_dot_position()
+#         dot_label.place(x=dot_x, y=dot_y)
+#         # the format for storing the images
+#         img_name = f'opencv_frame_{img_counter}'
+#         # saves the image as a png file
+#         cv2.imwrite(img_name + ".png", img_frame)
+#         print('screenshot taken')
+#         # the number of images automatically increases by 1
+#         img_counter += 1
