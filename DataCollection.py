@@ -64,8 +64,7 @@ current_frame = consent_frame
 # strings for the different frames
 consent_string = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
 instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times. The window will automatically maximize as well."
-end_string = "Thank you for helping us collect data for our neural network! The app will close automatically when the data has finished sending."
-
+end_string = "Thank you for helping us collect data for our neural network! If you can see this screen, the application is safe to close."
 
 def load_frame(destroy_frame, next_frame):
     # sets the currentFrame variable to the one that's loaded
@@ -74,7 +73,6 @@ def load_frame(destroy_frame, next_frame):
     # destroys the previous frame and loads the next one
     destroy_frame.destroy()
     next_frame.pack()
-
 
 # updates the camera
 def update_camera():
@@ -100,14 +98,13 @@ def update_camera():
     data_label.after(7, update_camera)
     
     if img_counter == 3:
-        cam.release()
         load_frame(data_frame, end_frame)
+        cam.release()
 
         if current_frame == end_frame:
             h5path = createH5()
             sendEmail(h5path)
             readH5(h5path)
-            app.destroy()
 
 def take_picture(event):
     global n_counter
@@ -198,7 +195,6 @@ def determine_direction(x, y):
     else:
         return "unknown"
 
-
 def readH5(path):
     # Open the HDF5 file for reading
     h5f = h5py.File(path, 'r')
@@ -218,10 +214,9 @@ def readH5(path):
         plt.title(f"Label: {label}")
         plt.show()
 
-
 def createH5():
     # Define the path to the folder
-    folder_path = 'images'
+    folder_path = 'data_images'
 
     # Ensure it's a directory
     if os.path.isdir(folder_path):
@@ -278,7 +273,6 @@ def createH5():
 
     # Return path of h5 file
     return h5path
-
 
 def generate_dot_position():
     global dot_x
@@ -346,7 +340,6 @@ def generate_dot_position():
     current_direction = determine_direction(dot_x, dot_y)
     print(current_direction)
     return current_direction
-
 
 def sendEmail(path):
     subject = "AI_Data"
