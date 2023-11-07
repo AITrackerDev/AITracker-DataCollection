@@ -1,5 +1,7 @@
 # This is the data collection application of our program
 # All this does is take a picture and saves it to the folder "data_images"
+import os
+import matplotlib.pyplot as plt
 import customtkinter as ctk
 import h5py
 import numpy as np
@@ -13,10 +15,11 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
+
 # application setup variables
 WIDTH, HEIGHT = 1080, 720
 ASSETS_PATH = "assets/"
-current_frame = 0
+global current_frame
 STATIC_DOT = False
 
 # webcam and current image frame setup
@@ -49,7 +52,6 @@ dot_picture = Image.open(ASSETS_PATH + "dot.png")
 dot_image = ImageTk.PhotoImage(dot_picture)
 dot_x = 0
 dot_y = 0
-current_direction = True
 
 # frame instantiations
 consent_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
@@ -57,11 +59,14 @@ instructions_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 data_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 end_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 
+current_frame = consent_frame
+
 # strings for the different frames
 consent_string = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
 instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times. The window will automatically maximize as well."
+end_string = "Thank you for helping us collect data for our neural network! The app will close automatically when the data has finished sending."
 
-# button functions
+
 def load_frame(destroy_frame, next_frame):
     # sets the currentFrame variable to the one that's loaded
     global current_frame
@@ -70,10 +75,12 @@ def load_frame(destroy_frame, next_frame):
     destroy_frame.destroy()
     next_frame.pack()
 
+
 # updates the camera
 def update_camera():
     global img_frame
     global img_counter
+    global current_frame
     
     #reads data from the camera
     ret, frame = cam.read()
@@ -92,15 +99,17 @@ def update_camera():
     # after a defined number of milliseconds, run this function again
     data_label.after(7, update_camera)
     
-    if img_counter == 50: 
-        load_frame(data_frame, end_frame)
+    if img_counter == 3:
         cam.release()
-        '''
-        write email received logic here
-        '''
+        load_frame(data_frame, end_frame)
+
+        if current_frame == end_frame:
+            h5path = createH5()
+            sendEmail(h5path)
+            readH5(h5path)
+            app.destroy()
 
 def take_picture(event):
-    global direction
     global n_counter
     global nw_counter
     global ne_counter
@@ -151,12 +160,16 @@ def take_picture(event):
             img_name = f'center{c_counter}.png'
 
         # saves the image as a png file
-        cv2.imwrite(img_name, img_frame)
+        path = os.path.join('images', img_name)
+        cv2.imwrite(path, img_frame)
 
         # sends png as email
-        sendEmail(img_name)
+        #sendEmail(path)
 
         current_direction = generate_dot_position()
+        while current_direction == "unknown":
+            current_direction = generate_dot_position()
+
         dot_label.place(x=dot_x, y=dot_y)
         print('screenshot taken')
 
@@ -184,6 +197,88 @@ def determine_direction(x, y):
         return "south east"
     else:
         return "unknown"
+
+
+def readH5(path):
+    # Open the HDF5 file for reading
+    h5f = h5py.File(path, 'r')
+
+    # Read the 'images' and 'labels' datasets
+    images = h5f['images'][:]
+    labels = h5f['labels'][:]
+
+    # Close the HDF5 file
+    h5f.close()
+
+    # Display the images
+    for i in range(len(images)):
+        label = labels[i].decode()  # Decode the label from bytes to string
+        plt.figure()
+        plt.imshow(images[i])
+        plt.title(f"Label: {label}")
+        plt.show()
+
+
+def createH5():
+    # Define the path to the folder
+    folder_path = 'images'
+
+    # Ensure it's a directory
+    if os.path.isdir(folder_path):
+        # Loop through all files in the folder
+        for filename in os.listdir(folder_path):
+            print(filename)
+            file_path = os.path.join(folder_path, filename)
+
+            # Check if it's an image file (you can customize this check)
+            if filename.endswith('.png') and not filename.startswith('g'):
+                # Read the image
+                image = cv2.imread(file_path)
+
+                # Convert the image to grayscale
+                grayscale_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+                # Save the grayscale image with the desired filename format
+                output_filename = f'g-{os.path.splitext(filename)[0]}.png'
+                output_path = os.path.join(folder_path, output_filename)
+                cv2.imwrite(output_path, grayscale_image)
+
+    common_size = (128, 128)
+
+    # Create a list to store resized images and labels
+    resized_images = []
+    labels = []
+
+    # Loop through the files in the directory
+    for filename in os.listdir(folder_path):
+        if filename.startswith('g-') and filename.endswith('.png'):
+            # Load the image using cv2 and resize it to the specified dimension
+            img = cv2.imread(os.path.join(folder_path, filename))
+            img = cv2.resize(img, common_size)
+            resized_images.append(img)
+
+            # Use the filename (without extension) as the label
+            label = os.path.splitext(filename)[0]
+            labels.append(label)
+
+    # Convert the lists to NumPy arrays
+    resized_images = np.array(resized_images)
+    labels = np.array(labels, dtype='S')
+
+    # Create an HDF5 file
+    h5path = 'image_collection.h5'
+    h5f = h5py.File(h5path, 'w')
+
+    # Create datasets for resized images and labels
+    h5f.create_dataset('images', data=resized_images)
+    h5f.create_dataset('labels', data=labels)
+
+    # Close the HDF5 file
+    h5f.close()
+
+    # Return path of h5 file
+    return h5path
+
 
 def generate_dot_position():
     global dot_x
@@ -251,6 +346,7 @@ def generate_dot_position():
     current_direction = determine_direction(dot_x, dot_y)
     print(current_direction)
     return current_direction
+
 
 def sendEmail(path):
     subject = "AI_Data"
@@ -332,42 +428,23 @@ instructions_label.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
 instructions_button.place(relx=.5, rely=0.9, anchor=ctk.CENTER)
 
 # data collection frame
-direction = generate_dot_position()
 app.bind("<Key-space>", take_picture)
 data_label = ctk.CTkLabel(data_frame, text="")
 dot_label = ctk.CTkLabel(data_frame, text="")
 dot_label.configure(image=dot_image)
 data_label.grid(column=0, row=0)
 
-# create example hdf5 file
-fileW = h5py.File("example.hdf5", "w")
-
-dataset = fileW.create_dataset("data", shape=(10,), dtype='i')
-
-for i in range(10):
-    dataset[i] = i
-
-fileW.close()
-
-# read example hdf5 file after it is created
-fileR = h5py.File("example.hdf5", "r")
-
-dataset = fileR["data"]
-data = np.array(dataset)
-
-fileR.close()
-
-print("Example Data:")
-print(data)
-
 # program finished frame
-finished_text = ctk.CTkLabel(text = "Thank you for helping us collect data for our neural network! The app will close automatically when the data has finished sending.")
+finished_text = ctk.CTkLabel(end_frame, text=end_string)
 finished_text.place(relx=.5, rely=.5, anchor=ctk.CENTER)
 
 # application start code
 consent_frame.pack()
 update_camera()
 current_direction = generate_dot_position()
+while current_direction == "unknown":
+    current_direction = generate_dot_position()
+
 dot_label.place(x=dot_x, y=dot_y)
 app.mainloop()
 
