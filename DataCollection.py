@@ -15,9 +15,10 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 
+app = ctk.CTk()
 
 # application setup variables
-WIDTH, HEIGHT = 1080, 720
+WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
 ASSETS_PATH = "assets/"
 global current_frame
 STATIC_DOT = False
@@ -32,7 +33,6 @@ img_counter = 0
 # app window setup
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
-app = ctk.CTk()
 app.geometry(str(WIDTH) + "x" + str(HEIGHT))
 app.title("aiTracker Data Collection")
 
@@ -58,7 +58,6 @@ consent_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 instructions_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 data_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
 end_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
-
 current_frame = consent_frame
 
 # strings for the different frames
@@ -90,12 +89,13 @@ def update_camera():
         img_frame = frame
         # convert the image, so it can be displayed using the data_frame label
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        img = cv2.resize(img, (WIDTH, HEIGHT))
         img = Image.fromarray(img)
         img = ImageTk.PhotoImage(image=img)
         data_label.configure(image=img)
         data_label.image = img
     # after a defined number of milliseconds, run this function again
-    data_label.after(7, update_camera)
+    data_label.after(10, update_camera)
     
     if img_counter == 3:
         load_frame(data_frame, end_frame)
@@ -216,7 +216,7 @@ def readH5(path):
 
 def createH5():
     # Define the path to the folder
-    folder_path = 'data_images'
+    folder_path = 'images'
 
     # Ensure it's a directory
     if os.path.isdir(folder_path):
@@ -311,8 +311,8 @@ def generate_dot_position():
     else:
         #divisions of the screen
         div_amount = 8
-        x_div = WIDTH/div_amount
-        y_div = HEIGHT/div_amount
+        x_div = math.floor(WIDTH/div_amount)
+        y_div = math.floor(HEIGHT/div_amount)
         
         #determines the direction to spawn the dot in 
         dir = rand.randint(0, 4)
