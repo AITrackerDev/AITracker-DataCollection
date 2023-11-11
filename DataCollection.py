@@ -114,6 +114,9 @@ def update_camera():
             sendEmail(h5path)
             #readH5(h5path)
 
+            # delete the h5 file after it has been sent
+            os.remove("image_collection.h5")
+
 def take_picture(event):
     global n_counter
     global nw_counter
@@ -407,9 +410,6 @@ def sendEmail(path):
 
     # terminating the session
     s.quit()
-    
-    # delete the h5 file after it has been sent
-    os.remove("image_collection.h5")
 
 # widgets contained in each frame
 # consent frame
