@@ -1,4 +1,5 @@
 import tkinter as tk
+import platform
 
 class FullScreenApp(object):
     def __init__(self, master, **kwargs):

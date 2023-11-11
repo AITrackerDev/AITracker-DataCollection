@@ -16,13 +16,23 @@ from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
 import datetime
+import platform
 
+# app initialization
 app = ctk.CTk()
-app.state("zoomed")
-app.wm_attributes("-fullscreen", True)
+SYSTEM = platform.system()
+
+if SYSTEM == "Windows":
+    #app.state("zoomed")
+    pad=3
+    app.geometry("{0}x{1}+0+0".format(
+        app.winfo_screenwidth()-pad, app.winfo_screenheight()-pad))
+elif SYSTEM == "Darwin":
+    app.wm_attributes("-fullscreen", True)
 
 # application setup variables
-WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
+WIDTH, HEIGHT = app.winfo_width(), app.winfo_height()
+print(f"Width: {WIDTH}, Height: {HEIGHT}")
 ASSETS_PATH = "assets/"
 STATIC_DOT = False
 
@@ -35,7 +45,6 @@ img_counter = 0
 # app window setup
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
-#app.geometry(str(WIDTH) + "x" + str(HEIGHT))
 app.title("aiTracker Data Collection")
 
 # counter information
