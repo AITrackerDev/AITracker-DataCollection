@@ -17,6 +17,7 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 app = ctk.CTk()
+app.state("zoomed")
 app.wm_attributes("-fullscreen", True)
 
 # application setup variables
