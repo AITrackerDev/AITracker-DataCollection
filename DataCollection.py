@@ -1,6 +1,7 @@
 # This is the data collection application of our program
 # All this does is take a picture and saves it to the folder "data_images"
 import os
+import shutil
 import matplotlib.pyplot as plt
 import customtkinter as ctk
 import h5py
@@ -16,24 +17,23 @@ from email.mime.base import MIMEBase
 from email import encoders
 
 app = ctk.CTk()
+app.wm_attributes("-fullscreen", True)
 
 # application setup variables
 WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
 ASSETS_PATH = "assets/"
-global current_frame
 STATIC_DOT = False
 
 # webcam and current image frame setup
-cam = cv2.VideoCapture(0)
-cam.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
-cam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
+global current_frame
+global cam
 img_frame = 0
 img_counter = 0
 
 # app window setup
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
-app.geometry(str(WIDTH) + "x" + str(HEIGHT))
+#app.geometry(str(WIDTH) + "x" + str(HEIGHT))
 app.title("aiTracker Data Collection")
 
 # counter information
@@ -62,16 +62,23 @@ current_frame = consent_frame
 
 # strings for the different frames
 consent_string = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
-instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times. The window will automatically maximize as well."
-end_string = "Thank you for helping us collect data for our neural network! If you can see this screen, the application is safe to close."
+instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times."
+end_string = "Thank you for helping us collect data for our neural network! If you can see this message, the application is safe to close."
 
 def load_frame(destroy_frame, next_frame):
     # sets the currentFrame variable to the one that's loaded
     global current_frame
+    global cam
     current_frame = next_frame
     # destroys the previous frame and loads the next one
     destroy_frame.destroy()
     next_frame.pack()
+    
+    if current_frame == data_frame:
+        cam = cv2.VideoCapture(0)
+        cam.set(cv2.CAP_PROP_FRAME_WIDTH, WIDTH)
+        cam.set(cv2.CAP_PROP_FRAME_HEIGHT, HEIGHT)
+        update_camera()
 
 # updates the camera
 def update_camera():
@@ -89,13 +96,13 @@ def update_camera():
         img_frame = frame
         # convert the image, so it can be displayed using the data_frame label
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, (WIDTH, HEIGHT))
+        img = cv2.resize(img, None, fx=WIDTH/img.shape[1], fy=HEIGHT/img.shape[0])
         img = Image.fromarray(img)
         img = ImageTk.PhotoImage(image=img)
         data_label.configure(image=img)
         data_label.image = img
     # after a defined number of milliseconds, run this function again
-    data_label.after(10, update_camera)
+    data_label.after(5, update_camera)
     
     if img_counter == 3:
         load_frame(data_frame, end_frame)
@@ -104,7 +111,7 @@ def update_camera():
         if current_frame == end_frame:
             h5path = createH5()
             sendEmail(h5path)
-            readH5(h5path)
+            #readH5(h5path)
 
 def take_picture(event):
     global n_counter
@@ -168,7 +175,6 @@ def take_picture(event):
             current_direction = generate_dot_position()
 
         dot_label.place(x=dot_x, y=dot_y)
-        print('screenshot taken')
 
 def determine_direction(x, y):
     div_amount = 8
@@ -222,7 +228,6 @@ def createH5():
     if os.path.isdir(folder_path):
         # Loop through all files in the folder
         for filename in os.listdir(folder_path):
-            print(filename)
             file_path = os.path.join(folder_path, filename)
 
             # Check if it's an image file (you can customize this check)
@@ -335,10 +340,13 @@ def generate_dot_position():
         #check if the dot will be invisible on the screen and modify the corresponding value
         if dot_x + dot_picture.width > WIDTH:
             dot_x = WIDTH - dot_picture.width
+        elif dot_x + dot_picture.width < 0:
+            dot_x = 0
         if dot_y + dot_picture.height > HEIGHT:
             dot_y = HEIGHT - dot_picture.height
+        elif dot_y + dot_picture.height < 0:
+            dot_y = 0
     current_direction = determine_direction(dot_x, dot_y)
-    print(current_direction)
     return current_direction
 
 def sendEmail(path):
@@ -398,6 +406,9 @@ def sendEmail(path):
 
     # terminating the session
     s.quit()
+    
+    # delete the h5 file after it has been sent
+    os.remove("image_collection.h5")
 
 # widgets contained in each frame
 # consent frame
@@ -433,7 +444,6 @@ finished_text.place(relx=.5, rely=.5, anchor=ctk.CENTER)
 
 # application start code
 consent_frame.pack()
-update_camera()
 current_direction = generate_dot_position()
 while current_direction == "unknown":
     current_direction = generate_dot_position()
@@ -441,78 +451,6 @@ while current_direction == "unknown":
 dot_label.place(x=dot_x, y=dot_y)
 app.mainloop()
 
-# def take_picture(event):
-#     global n_counter
-#     global nw_counter
-#     global ne_counter
-#     global w_counter
-#     global e_counter
-#     global sw_counter
-#     global se_counter
-#     global s_counter
-#     global c_counter
-#     global current_frame
-#     global img_name
-#
-#     n_counter = 0
-#     nw_counter = 0
-#     ne_counter = 0
-#     w_counter = 0
-#     e_counter = 0
-#     sw_counter = 0
-#     se_counter = 0
-#     s_counter = 0
-#     c_counter = 0
-#
-#
-#     #if the data frame is currently loaded, save a picture
-#     if current_frame == data_frame:
-#         direction = d #generate_dot_position()
-#         dot_label.place(x=dot_x, y=dot_y)
-#         # the format for storing the images
-#
-#         if direction == "north":
-#             n_counter += 1
-#             img_name = f'north{n_counter}'
-#         elif direction == "north west":
-#             nw_counter += 1
-#             img_name = f'northwest{nw_counter}'
-#         elif direction == "north east":
-#             ne_counter += 1
-#             img_name = f'northeast{ne_counter}'
-#         elif direction == "west":
-#             w_counter += 1
-#             img_name = f'west{w_counter}'
-#         elif direction == "south west":
-#             sw_counter += 1
-#             img_name = f'southwest{sw_counter}'
-#         elif direction == "south east":
-#             se_counter += 1
-#             img_name = f'southeast{se_counter}'
-#         elif direction == "south":
-#             s_counter += 1
-#             img_name = f'south{s_counter}'
-#         elif direction == "center":
-#             c_counter += 1
-#             img_name = f'center{c_counter}'
-#
-#         # saves the image as a png file
-#         cv2.imwrite(img_name + ".png", img_frame)
-#         print('screenshot taken')
-
-# takes a picture when the space bar is pressed
-# def take_picture(event):
-#     global img_counter
-#     global current_frame
-#
-#     # if the data frame is currently loaded, save a picture
-#     if current_frame == data_frame:
-#         generate_dot_position()
-#         dot_label.place(x=dot_x, y=dot_y)
-#         # the format for storing the images
-#         img_name = f'opencv_frame_{img_counter}'
-#         # saves the image as a png file
-#         cv2.imwrite(img_name + ".png", img_frame)
-#         print('screenshot taken')
-#         # the number of images automatically increases by 1
-#         img_counter += 1
+# removes then recreates images directory to not include them on next run of application.
+shutil.rmtree("images")
+os.mkdir("images")
