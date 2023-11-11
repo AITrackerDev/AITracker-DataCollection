@@ -15,6 +15,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import datetime
 
 app = ctk.CTk()
 app.state("zoomed")
@@ -66,6 +67,7 @@ consent_string = "By continuing to use this application, you understand that the
 instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times."
 end_string = "Thank you for helping us collect data for our neural network! If you can see this message, the application is safe to close."
 
+
 def load_frame(destroy_frame, next_frame):
     # sets the currentFrame variable to the one that's loaded
     global current_frame
@@ -115,7 +117,7 @@ def update_camera():
             #readH5(h5path)
 
             # delete the h5 file after it has been sent
-            os.remove("image_collection.h5")
+            os.remove(h5path)
 
 def take_picture(event):
     global n_counter
@@ -269,8 +271,14 @@ def createH5():
     resized_images = np.array(resized_images)
     labels = np.array(labels, dtype='S')
 
-    # Create an HDF5 file
-    h5path = 'image_collection.h5'
+    # Get the current date and time
+    current_datetime = datetime.datetime.now()
+
+    # Format the date and time to create a timestamp
+    timestamp = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
+
+    # Create a file name using the timestamp
+    h5path = f"image_collection{timestamp}.h5"
     h5f = h5py.File(h5path, 'w')
 
     # Create datasets for resized images and labels
