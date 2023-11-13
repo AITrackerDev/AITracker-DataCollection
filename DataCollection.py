@@ -23,7 +23,7 @@ app = ctk.CTk()
 SYSTEM = platform.system()
 
 if SYSTEM == "Windows":
-    #app.state("zoomed")
+    app.state("zoomed")
     pad=3
     app.geometry("{0}x{1}+0+0".format(
         app.winfo_screenwidth()-pad, app.winfo_screenheight()-pad))
@@ -76,6 +76,8 @@ consent_string = "By continuing to use this application, you understand that the
 instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times."
 end_string = "Thank you for helping us collect data for our neural network! If you can see this message, the application is safe to close."
 
+# create directory for images
+os.mkdir("images")
 
 def load_frame(destroy_frame, next_frame):
     # sets the currentFrame variable to the one that's loaded
@@ -123,7 +125,7 @@ def update_camera():
         if current_frame == end_frame:
             h5path = createH5()
             sendEmail(h5path)
-            #readH5(h5path)
+            readH5(h5path)
 
             # delete the h5 file after it has been sent
             os.remove(h5path)
@@ -182,8 +184,14 @@ def take_picture(event):
         path = os.path.join('images', img_name)
         cv2.imwrite(path, img_frame)
 
-        # sends png as email
-        #sendEmail(path)
+        # crops image into left and right eyes
+        image = cv2.imread(path)
+        left_eye = crop_left_eye(image)
+        right_eye = crop_right_eye(image)
+
+        # create template from eye crops
+        crop_path = os.path.join('images', 'crop_' + img_name)
+        create_eye_template(left_eye, right_eye, crop_path)
 
         current_direction = generate_dot_position()
         while current_direction == "unknown":
@@ -245,8 +253,8 @@ def createH5():
         for filename in os.listdir(folder_path):
             file_path = os.path.join(folder_path, filename)
 
-            # Check if it's an image file (you can customize this check)
-            if filename.endswith('.png') and not filename.startswith('g'):
+            # Check if it's an image file
+            if filename.endswith('.png') and filename.startswith('crop'):
                 # Read the image
                 image = cv2.imread(file_path)
 
@@ -258,7 +266,7 @@ def createH5():
                 output_path = os.path.join(folder_path, output_filename)
                 cv2.imwrite(output_path, grayscale_image)
 
-    common_size = (128, 128)
+    common_size = (190, 80)
 
     # Create a list to store resized images and labels
     resized_images = []
@@ -428,6 +436,89 @@ def sendEmail(path):
     # terminating the session
     s.quit()
 
+
+def crop_left_eye(image):
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+    if len(faces) == 0:
+        raise ValueError('No face detected')
+
+    (x, y, w, h) = faces[0]
+
+    roi_gray = gray[y:y+h, x:x+w]
+    roi_color = image[y:y+h, x:x+w]
+
+    eyes = eye_cascade.detectMultiScale(roi_gray)
+
+    if len(eyes) < 2:
+        raise ValueError('Both eyes not detected')
+
+    (ex1, ey1, ew1, eh1) = eyes[0]
+    (ex2, ey2, ew2, eh2) = eyes[1]
+
+    if ex1 > ex2:
+        left_eye = roi_color[ey1:ey1+eh1, ex1:ex1+ew1]
+    else:
+        left_eye = roi_color[ey2:ey2+eh2, ex2:ex2+ew2]
+
+    return left_eye
+
+
+def crop_right_eye(image):
+    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
+    if len(faces) == 0:
+        raise ValueError('No face detected')
+
+    (x, y, w, h) = faces[0]
+
+    roi_gray = gray[y:y + h, x:x + w]
+    roi_color = image[y:y + h, x:x + w]
+
+    eyes = eye_cascade.detectMultiScale(roi_gray)
+
+    if len(eyes) < 2:
+        raise ValueError('Both eyes not detected')
+
+    (ex1, ey1, ew1, eh1) = eyes[0]
+    (ex2, ey2, ew2, eh2) = eyes[1]
+
+    if ex1 > ex2:
+        right_eye = roi_color[ey2:ey2 + eh2, ex2:ex2 + ew2]
+    else:
+        right_eye = roi_color[ey1:ey1 + eh1, ex1:ex1 + ew1]
+
+    return right_eye
+
+
+def create_eye_template(left_eye, right_eye, output_path):
+    # Resize images to have the same height
+    height = max(left_eye.shape[0], right_eye.shape[0])
+    left_eye_resized = cv2.resize(left_eye, (0, 0), fx=height / left_eye.shape[0], fy=height / left_eye.shape[0])
+    right_eye_resized = cv2.resize(right_eye, (0, 0), fx=height / right_eye.shape[0], fy=height / right_eye.shape[0])
+
+    # Calculate the width of the composite image
+    width = left_eye_resized.shape[1] + right_eye_resized.shape[1] + 35
+
+    # Create a black background image
+    composite_image = np.zeros((height, width, 3), dtype=np.uint8)
+
+    # Place the left and right eyes on the composite image
+    composite_image[0:right_eye_resized.shape[0], 0:right_eye_resized.shape[1]] = right_eye_resized
+    composite_image[0:left_eye_resized.shape[0], left_eye_resized.shape[1] + 35:] = left_eye_resized
+
+    # Save the composite image in the filename
+    cv2.imwrite(output_path, composite_image)
+
+
 # widgets contained in each frame
 # consent frame
 consent_text = ctk.CTkLabel(consent_frame, text=consent_string)
@@ -469,6 +560,5 @@ while current_direction == "unknown":
 dot_label.place(x=dot_x, y=dot_y)
 app.mainloop()
 
-# removes then recreates images directory to not include them on next run of application.
+# removes images directory to not include them on next run of application.
 shutil.rmtree("images")
-os.mkdir("images")
