@@ -34,7 +34,7 @@ elif SYSTEM == "Darwin":
 WIDTH, HEIGHT = app.winfo_width(), app.winfo_height()
 print(f"Width: {WIDTH}, Height: {HEIGHT}")
 ASSETS_PATH = "assets/"
-STATIC_DOT = False
+STATIC_DOT = True
 
 # webcam and current image frame setup
 global current_frame
@@ -436,7 +436,6 @@ def sendEmail(path):
     # terminating the session
     s.quit()
 
-
 def crop_left_eye(image):
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
@@ -466,7 +465,6 @@ def crop_left_eye(image):
         left_eye = roi_color[ey2:ey2+eh2, ex2:ex2+ew2]
 
     return left_eye
-
 
 def crop_right_eye(image):
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -498,7 +496,6 @@ def crop_right_eye(image):
 
     return right_eye
 
-
 def create_eye_template(left_eye, right_eye, output_path):
     # Resize images to have the same height
     height = max(left_eye.shape[0], right_eye.shape[0])
@@ -517,7 +514,6 @@ def create_eye_template(left_eye, right_eye, output_path):
 
     # Save the composite image in the filename
     cv2.imwrite(output_path, composite_image)
-
 
 # widgets contained in each frame
 # consent frame
