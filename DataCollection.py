@@ -40,6 +40,7 @@ global current_frame
 global cam
 img_frame = 0
 img_counter = 0
+EYE_CASCADE = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
 # app window setup
 ctk.set_appearance_mode("dark")
@@ -105,15 +106,24 @@ def update_camera():
     if ret:
         # flip image
         frame = cv2.flip(frame, 1)
-        # set the current image to the flipped one
         img_frame = frame
-        # convert the image, so it can be displayed using the data_frame label
+        # convert the image to grayscale for better performance
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # detect eyes in the frame
+        eyes = EYE_CASCADE.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+        # draw rectangles around the eyes
+        for (ex, ey, ew, eh) in eyes:
+            if len(eyes) <= 2:
+                cv2.rectangle(frame, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
+        
+        # convert back to RGB
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        img = cv2.resize(img, None, fx=WIDTH/img.shape[1], fy=HEIGHT/img.shape[0])
+        # resize image to full screen
+        img = cv2.resize(img, None, fx=WIDTH/frame.shape[1], fy=HEIGHT/frame.shape[0])
         img = Image.fromarray(img)
         img = ImageTk.PhotoImage(image=img)
         data_label.configure(image=img)
-        data_label.image = img
+        #data_label.image = img
     # after a defined number of milliseconds, run this function again
     data_label.after(5, update_camera)
     
