@@ -20,14 +20,14 @@ import platform
 
 # app initialization
 app = ctk.CTk()
-SYSTEM = platform.system()
 
-if SYSTEM == "Windows":
+if platform.system() == "Windows":
     app.state("zoomed")
     pad=3
     app.geometry("{0}x{1}+0+0".format(
-        app.winfo_screenwidth()-pad, app.winfo_screenheight()-pad))
-elif SYSTEM == "Darwin":
+        app.winfo_screenwidth()-pad, app.winfo_screenheight()-pad)) 
+    app.height = app.height - (app.winfo_reqheight() - app.winfo_geometry().split('+')[2])
+elif platform.system() == "Darwin":
     app.wm_attributes("-fullscreen", True)
 
 # application setup variables
@@ -366,15 +366,15 @@ def generate_dot_position():
             dot_x = rand.randint((div_amount - 5) * x_div, (div_amount - 3) * x_div)
             dot_y = rand.randint((div_amount - 5) * y_div, (div_amount - 3) * y_div)
 
-        #check if the dot will be invisible on the screen and modify the corresponding value
-        if dot_x + dot_picture.width > WIDTH:
-            dot_x = WIDTH - dot_picture.width
-        elif dot_x + dot_picture.width < 0:
-            dot_x = 0
-        if dot_y + dot_picture.height > HEIGHT:
-            dot_y = HEIGHT - dot_picture.height
-        elif dot_y + dot_picture.height < 0:
-            dot_y = 0
+    #check if the dot will be invisible on the screen and modify the corresponding value
+    if dot_x + dot_picture.width > WIDTH:
+        dot_x = WIDTH - dot_picture.width
+    elif dot_x + dot_picture.width < 0:
+        dot_x = 0
+    if dot_y + dot_picture.height > HEIGHT:
+        dot_y = HEIGHT - dot_picture.height
+    elif dot_y + dot_picture.height < 0:
+        dot_y = 0
     current_direction = determine_direction(dot_x, dot_y)
     return current_direction
 
