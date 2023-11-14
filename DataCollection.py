@@ -25,8 +25,7 @@ if platform.system() == "Windows":
     app.state("zoomed")
     pad=3
     app.geometry("{0}x{1}+0+0".format(
-        app.winfo_screenwidth()-pad, app.winfo_screenheight()-pad)) 
-    app.height = app.height - (app.winfo_reqheight() - app.winfo_geometry().split('+')[2])
+        app.winfo_screenwidth()-pad, app.winfo_reqheight() - app.winfo_geometry().split('+')[2]-pad))
 elif platform.system() == "Darwin":
     app.wm_attributes("-fullscreen", True)
 
