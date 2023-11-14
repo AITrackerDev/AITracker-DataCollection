@@ -110,11 +110,22 @@ def update_camera():
         # convert the image to grayscale for better performance
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         # detect eyes in the frame
-        eyes = EYE_CASCADE.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5)
+        eyes = EYE_CASCADE.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
         # draw rectangles around the eyes
         for (ex, ey, ew, eh) in eyes:
             if len(eyes) <= 2:
-                cv2.rectangle(frame, (ex, ey), (ex + ew, ey + eh), (0, 255, 0), 2)
+                # factors to shrink the eye boxes by
+                w_shrink_factor = 1
+                h_shrink_factor = 0.45
+                
+                # calculate the new width and height of the boxes
+                new_width = int(ew * w_shrink_factor)
+                new_height = int(eh * h_shrink_factor)
+
+                # calculate new top-left and bottom-right coordinates
+                new_pt1 = (ex + (ew - new_width) // 2, ey + (eh - new_height) // 2)
+                new_pt2 = (new_pt1[0] + new_width, new_pt1[1] + new_height)
+                cv2.rectangle(frame, new_pt1, new_pt2, (0, 255, 0), 2)
         
         # convert back to RGB
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -447,7 +458,6 @@ def sendEmail(path):
 
 def crop_left_eye(image):
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
@@ -460,7 +470,7 @@ def crop_left_eye(image):
     roi_gray = gray[y:y+h, x:x+w]
     roi_color = image[y:y+h, x:x+w]
 
-    eyes = eye_cascade.detectMultiScale(roi_gray)
+    eyes = EYE_CASCADE.detectMultiScale(roi_gray)
 
     if len(eyes) < 2:
         raise ValueError('Both eyes not detected')
@@ -477,7 +487,6 @@ def crop_left_eye(image):
 
 def crop_right_eye(image):
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
@@ -490,7 +499,7 @@ def crop_right_eye(image):
     roi_gray = gray[y:y + h, x:x + w]
     roi_color = image[y:y + h, x:x + w]
 
-    eyes = eye_cascade.detectMultiScale(roi_gray)
+    eyes = EYE_CASCADE.detectMultiScale(roi_gray)
 
     if len(eyes) < 2:
         raise ValueError('Both eyes not detected')
