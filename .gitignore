@@ -12,3 +12,4 @@ _site
 .vscode
 *.hdf5
 .idea
+test.py
