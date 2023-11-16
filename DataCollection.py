@@ -17,20 +17,24 @@ from email.mime.base import MIMEBase
 from email import encoders
 import datetime
 import platform
+import ctypes
 
 # app initialization
+ctypes.windll.shcore.SetProcessDpiAwareness(2)
 app = ctk.CTk()
 
 if platform.system() == "Windows":
-    app.state("zoomed")
+    #app.state("zoomed")
+    # app.attributes('-fullscreen', True)
+    app.after(0, lambda: app.state('zoomed'))
     pad=3
-    app.geometry("{0}x{1}+0+0".format(
-        app.winfo_screenwidth()-pad, app.winfo_screenheight()-pad))
+    # app.geometry("{0}x{1}+0+0".format(
+    #     app.winfo_screenwidth()-pad, app.winfo_screenheight()-pad))
 elif platform.system() == "Darwin":
     app.wm_attributes("-fullscreen", True)
 
 # application setup variables
-WIDTH, HEIGHT = app.winfo_width(), app.winfo_height()
+WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
 print(f"Width: {WIDTH}, Height: {HEIGHT}")
 ASSETS_PATH = "assets/"
 STATIC_DOT = True

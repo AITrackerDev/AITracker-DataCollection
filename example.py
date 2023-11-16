@@ -16,5 +16,5 @@ class FullScreenApp(object):
     #     self._geom=geom
 
 root=tk.Tk()
-app=FullScreenApp(root)
+root.attributes('-fullscreen', True)
 root.mainloop()
