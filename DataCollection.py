@@ -3,6 +3,7 @@
 import os
 import shutil
 import customtkinter as ctk
+import tkinter as tk
 import numpy as np
 import cv2
 import random as rand
@@ -112,7 +113,7 @@ def update_camera():
         for (ex, ey, ew, eh) in eyes:
             if len(eyes) == 2:
                 pad = 10
-                cv2.rectangle(frame, (ex-10, ey-10), (ex+ew+10, ey+eh+10), (0, 255, 0), 2)
+                cv2.rectangle(frame, (ex-pad, ey-pad), (ex+ew+pad, ey+eh+pad), (0, 255, 0), 2)
         
         # convert back to RGB
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -192,55 +193,7 @@ def take_picture(event):
         cv2.imwrite(path, img_frame)
         image = cv2.imread(path)
 
-        # # detect the faces in the photo
-        # face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-        # if len(faces) == 0:
-        #     raise ValueError('No face detected')
-        #
-        # # variables for eyes
-        # left_eye = None
-        # right_eye = None
-        #
-        # # roi for the face
-        # (x, y, w, h) = faces[0]
-        # roi_gray = gray[y:y+h, x:x+w]
-        # roi_color = image[y:y+h, x:x+w]
-        #
-        # #find the eyes in the picture
-        # eyes = EYE_CASCADE.detectMultiScale(roi_gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
-        # if len(eyes) < 2:
-        #     raise ValueError('Both eyes not detected')
-        #
-        # # calculation constants
-        # w_shrink_factor = 1
-        # h_shrink_factor = 0.45
-        # margin = 5
-        #
-        # # eye 0 tighter restriction
-        # (ex1, ey1, ew1, eh1) = eyes[0]
-        # e1_width = int(ew1 * w_shrink_factor)
-        # e1_height = int(eh1 * h_shrink_factor)
-        #
-        # e1_s = (ex1 + (ew1 - e1_width) // 2, ey1 + (eh1 - e1_height) // 2)
-        # e1_f = (e1_s[0] + e1_width, e1_s[1] + e1_height)
-        #
-        # # eye 1 tighter restriction
-        # (ex2, ey2, ew2, eh2) = eyes[1]
-        # e2_width = int(ew2 * w_shrink_factor)
-        # e2_height = int(eh2 * h_shrink_factor)
-        #
-        # e2_s = ((ex2 + (ew2 - e2_width) // 2) + margin, (ey2 + (eh2 - e2_height) // 2) + margin)
-        # e2_f = ((e2_s[0] + e2_width) - margin, (e2_s[1] + e2_height) - margin)
-        #
-        # if ex1 < ex2:
-        #     left_eye = roi_color[e1_s[1]:e1_f[1], e1_s[0]:e1_f[0]]
-        #     right_eye = roi_color[e2_s[1]:e2_f[1], e2_s[0]:e2_f[0]]
-        # else:
-        #     right_eye = roi_color[e1_s[1]:e1_f[1], e1_s[0]:e1_f[0]]
-        #     left_eye = roi_color[e2_s[1]:e2_f[1], e2_s[0]:e2_f[0]]
-
+        # images of each eye
         left_eye = crop_left_eye(image)
         right_eye = crop_right_eye(image)
 
@@ -410,35 +363,20 @@ def crop_right_eye(image):
     return right_eye
 
 def create_eye_template(left_eye, right_eye, output_path):
-    # # width and height of new image
-    # total_width = left_eye.shape[1] + right_eye.shape[1]
-    # max_height = max(left_eye.shape[0], right_eye.shape[0])
-    #
-    # composite_image = np.zeros((max_height, total_width, 3), dtype=np.uint8)
-    #
-    # # paste left_eye
-    # composite_image[:left_eye.shape[0], :left_eye.shape[1]] = left_eye
-    #
-    # # paste right eye
-    # composite_image[:right_eye.shape[0], left_eye.shape[1]:] = right_eye
-    #
-    # # save the composite image
-    # cv2.imwrite(output_path, composite_image)
-
     # Resize images to have the same height
     height = max(left_eye.shape[0], right_eye.shape[0])
     left_eye_resized = cv2.resize(left_eye, (0, 0), fx=height / left_eye.shape[0], fy=height / left_eye.shape[0])
     right_eye_resized = cv2.resize(right_eye, (0, 0), fx=height / right_eye.shape[0], fy=height / right_eye.shape[0])
-
+    
     # Calculate the width of the composite image
-    width = left_eye_resized.shape[1] + right_eye_resized.shape[1] + 35
+    width = left_eye_resized.shape[1] + right_eye_resized.shape[1]
 
     # Create a black background image
     composite_image = np.zeros((height, width, 3), dtype=np.uint8)
 
     # Place the left and right eyes on the composite image
     composite_image[0:right_eye_resized.shape[0], 0:right_eye_resized.shape[1]] = right_eye_resized
-    composite_image[0:left_eye_resized.shape[0], left_eye_resized.shape[1] + 35:] = left_eye_resized
+    composite_image[0:left_eye_resized.shape[0], left_eye_resized.shape[1]:] = left_eye_resized
 
     # Save the composite image in the filename
     cv2.imwrite(output_path, composite_image)
