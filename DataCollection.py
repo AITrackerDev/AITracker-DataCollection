@@ -13,12 +13,16 @@ import ctypes
 from Functions import sendEmail, createH5, readH5
 
 # app initialization
-ctypes.windll.shcore.SetProcessDpiAwareness(2)
+isWindows = platform.system() == "Windows"
+
+if isWindows:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
+
 app = ctk.CTk()
 
-if platform.system() == "Windows":
+if isWindows:
     app.after(0, lambda: app.state('zoomed'))
-elif platform.system() == "Darwin":
+else:
     app.wm_attributes("-fullscreen", True)
 
 # application setup variables
