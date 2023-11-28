@@ -13,12 +13,11 @@ import ctypes
 from Functions import sendEmail, createH5, readH5
 
 # app initialization
+ctypes.windll.shcore.SetProcessDpiAwareness(2)
 app = ctk.CTk()
 
 if platform.system() == "Windows":
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    #app.state("zoomed")
-    #app.attributes('-fullscreen', True)
+    app.after(0, lambda: app.state('zoomed'))
 elif platform.system() == "Darwin":
     app.wm_attributes("-fullscreen", True)
 
@@ -53,6 +52,7 @@ c_counter = 0
 
 # dot information
 dot_picture = Image.open(ASSETS_PATH + "dot.png")
+print(f'DotWidth: {dot_picture.width} DotHeight: {dot_picture.height}')
 dot_image = ImageTk.PhotoImage(dot_picture)
 dot_x = 0
 dot_y = 0
@@ -188,54 +188,57 @@ def take_picture(event):
         cv2.imwrite(path, img_frame)
         image = cv2.imread(path)
 
-        # detect the faces in the photo
-        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-        if len(faces) == 0:
-            raise ValueError('No face detected')
-        
-        # variables for eyes
-        left_eye = None
-        right_eye = None
-        
-        # roi for the face
-        (x, y, w, h) = faces[0]
-        roi_gray = gray[y:y+h, x:x+w]
-        roi_color = image[y:y+h, x:x+w]
-        
-        #find the eyes in the picture
-        eyes = EYE_CASCADE.detectMultiScale(roi_gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
-        if len(eyes) < 2:
-            raise ValueError('Both eyes not detected')
-        
-        # calculation constants
-        w_shrink_factor = 1
-        h_shrink_factor = 0.45
-        margin = 5
-        
-        # eye 0 tighter restriction
-        (ex1, ey1, ew1, eh1) = eyes[0]
-        e1_width = int(ew1 * w_shrink_factor)
-        e1_height = int(eh1 * h_shrink_factor)
-        
-        e1_s = (ex1 + (ew1 - e1_width) // 2, ey1 + (eh1 - e1_height) // 2)
-        e1_f = (e1_s[0] + e1_width, e1_s[1] + e1_height)
-        
-        # eye 1 tighter restriction
-        (ex2, ey2, ew2, eh2) = eyes[1]
-        e2_width = int(ew2 * w_shrink_factor)
-        e2_height = int(eh2 * h_shrink_factor)
-        
-        e2_s = ((ex2 + (ew2 - e2_width) // 2) + margin, (ey2 + (eh2 - e2_height) // 2) + margin)
-        e2_f = ((e2_s[0] + e2_width) - margin, (e2_s[1] + e2_height) - margin)
-        
-        if ex1 < ex2:
-            left_eye = roi_color[e1_s[1]:e1_f[1], e1_s[0]:e1_f[0]]
-            right_eye = roi_color[e2_s[1]:e2_f[1], e2_s[0]:e2_f[0]]
-        else:
-            right_eye = roi_color[e1_s[1]:e1_f[1], e1_s[0]:e1_f[0]]
-            left_eye = roi_color[e2_s[1]:e2_f[1], e2_s[0]:e2_f[0]]
+        # # detect the faces in the photo
+        # face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        # if len(faces) == 0:
+        #     raise ValueError('No face detected')
+        #
+        # # variables for eyes
+        # left_eye = None
+        # right_eye = None
+        #
+        # # roi for the face
+        # (x, y, w, h) = faces[0]
+        # roi_gray = gray[y:y+h, x:x+w]
+        # roi_color = image[y:y+h, x:x+w]
+        #
+        # #find the eyes in the picture
+        # eyes = EYE_CASCADE.detectMultiScale(roi_gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
+        # if len(eyes) < 2:
+        #     raise ValueError('Both eyes not detected')
+        #
+        # # calculation constants
+        # w_shrink_factor = 1
+        # h_shrink_factor = 0.45
+        # margin = 5
+        #
+        # # eye 0 tighter restriction
+        # (ex1, ey1, ew1, eh1) = eyes[0]
+        # e1_width = int(ew1 * w_shrink_factor)
+        # e1_height = int(eh1 * h_shrink_factor)
+        #
+        # e1_s = (ex1 + (ew1 - e1_width) // 2, ey1 + (eh1 - e1_height) // 2)
+        # e1_f = (e1_s[0] + e1_width, e1_s[1] + e1_height)
+        #
+        # # eye 1 tighter restriction
+        # (ex2, ey2, ew2, eh2) = eyes[1]
+        # e2_width = int(ew2 * w_shrink_factor)
+        # e2_height = int(eh2 * h_shrink_factor)
+        #
+        # e2_s = ((ex2 + (ew2 - e2_width) // 2) + margin, (ey2 + (eh2 - e2_height) // 2) + margin)
+        # e2_f = ((e2_s[0] + e2_width) - margin, (e2_s[1] + e2_height) - margin)
+        #
+        # if ex1 < ex2:
+        #     left_eye = roi_color[e1_s[1]:e1_f[1], e1_s[0]:e1_f[0]]
+        #     right_eye = roi_color[e2_s[1]:e2_f[1], e2_s[0]:e2_f[0]]
+        # else:
+        #     right_eye = roi_color[e1_s[1]:e1_f[1], e1_s[0]:e1_f[0]]
+        #     left_eye = roi_color[e2_s[1]:e2_f[1], e2_s[0]:e2_f[0]]
+
+        left_eye = crop_left_eye(image)
+        right_eye = crop_right_eye(image)
 
         # create template from eye crops
         crop_path = os.path.join('images', 'crop_' + img_name)
@@ -306,6 +309,8 @@ def generate_dot_position():
         elif dir == 8:
             dot_x = WIDTH - dot_picture.width
             dot_y = HEIGHT - dot_picture.height
+
+        print(f"Direction: {dir} X: {dot_x} Y:{dot_y}")
     else:
         #divisions of the screen
         div_amount = 8
@@ -401,19 +406,37 @@ def crop_right_eye(image):
     return right_eye
 
 def create_eye_template(left_eye, right_eye, output_path):
-    # width and height of new image
-    total_width = left_eye.shape[1] + right_eye.shape[1]
-    max_height = max(left_eye.shape[0], right_eye.shape[0])
+    # # width and height of new image
+    # total_width = left_eye.shape[1] + right_eye.shape[1]
+    # max_height = max(left_eye.shape[0], right_eye.shape[0])
+    #
+    # composite_image = np.zeros((max_height, total_width, 3), dtype=np.uint8)
+    #
+    # # paste left_eye
+    # composite_image[:left_eye.shape[0], :left_eye.shape[1]] = left_eye
+    #
+    # # paste right eye
+    # composite_image[:right_eye.shape[0], left_eye.shape[1]:] = right_eye
+    #
+    # # save the composite image
+    # cv2.imwrite(output_path, composite_image)
 
-    composite_image = np.zeros((max_height, total_width, 3), dtype=np.uint8)
+    # Resize images to have the same height
+    height = max(left_eye.shape[0], right_eye.shape[0])
+    left_eye_resized = cv2.resize(left_eye, (0, 0), fx=height / left_eye.shape[0], fy=height / left_eye.shape[0])
+    right_eye_resized = cv2.resize(right_eye, (0, 0), fx=height / right_eye.shape[0], fy=height / right_eye.shape[0])
 
-    # paste left_eye
-    composite_image[:left_eye.shape[0], :left_eye.shape[1]] = left_eye
+    # Calculate the width of the composite image
+    width = left_eye_resized.shape[1] + right_eye_resized.shape[1] + 35
 
-    # paste right eye
-    composite_image[:right_eye.shape[0], left_eye.shape[1]:] = right_eye
+    # Create a black background image
+    composite_image = np.zeros((height, width, 3), dtype=np.uint8)
 
-    # save the composite image
+    # Place the left and right eyes on the composite image
+    composite_image[0:right_eye_resized.shape[0], 0:right_eye_resized.shape[1]] = right_eye_resized
+    composite_image[0:left_eye_resized.shape[0], left_eye_resized.shape[1] + 35:] = left_eye_resized
+
+    # Save the composite image in the filename
     cv2.imwrite(output_path, composite_image)
 
 # widgets contained in each frame
