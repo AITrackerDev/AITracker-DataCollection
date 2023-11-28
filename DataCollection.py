@@ -2,34 +2,23 @@
 # All this does is take a picture and saves it to the folder "data_images"
 import os
 import shutil
-import matplotlib.pyplot as plt
 import customtkinter as ctk
-import h5py
 import numpy as np
 import cv2
 import random as rand
 import math
 from PIL import Image, ImageTk
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-import datetime
 import platform
 import ctypes
+from Functions import sendEmail, createH5, readH5
 
 # app initialization
-ctypes.windll.shcore.SetProcessDpiAwareness(2)
 app = ctk.CTk()
 
 if platform.system() == "Windows":
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)
     #app.state("zoomed")
-    # app.attributes('-fullscreen', True)
-    app.after(0, lambda: app.state('zoomed'))
-    pad=3
-    # app.geometry("{0}x{1}+0+0".format(
-    #     app.winfo_screenwidth()-pad, app.winfo_screenheight()-pad))
+    #app.attributes('-fullscreen', True)
 elif platform.system() == "Darwin":
     app.wm_attributes("-fullscreen", True)
 
@@ -77,7 +66,7 @@ current_frame = consent_frame
 
 # strings for the different frames
 consent_string = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
-instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times."
+instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times. Please ensure you are in bright lighting, and that both green squares are visible around your eyes."
 end_string = "Thank you for helping us collect data for our neural network! If you can see this message, the application is safe to close."
 
 # create directory for images
@@ -117,19 +106,9 @@ def update_camera():
         eyes = EYE_CASCADE.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
         # draw rectangles around the eyes
         for (ex, ey, ew, eh) in eyes:
-            if len(eyes) <= 2:
-                # factors to shrink the eye boxes by
-                w_shrink_factor = 1
-                h_shrink_factor = 0.45
-                
-                # calculate the new width and height of the boxes
-                new_width = int(ew * w_shrink_factor)
-                new_height = int(eh * h_shrink_factor)
-
-                # calculate new top-left and bottom-right coordinates
-                new_pt1 = (ex + (ew - new_width) // 2, ey + (eh - new_height) // 2)
-                new_pt2 = (new_pt1[0] + new_width, new_pt1[1] + new_height)
-                cv2.rectangle(frame, new_pt1, new_pt2, (0, 255, 0), 2)
+            if len(eyes) == 2:
+                pad = 10
+                cv2.rectangle(frame, (ex-10, ey-10), (ex+ew+10, ey+eh+10), (0, 255, 0), 2)
         
         # convert back to RGB
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -140,7 +119,7 @@ def update_camera():
         data_label.configure(image=img)
         #data_label.image = img
     # after a defined number of milliseconds, run this function again
-    data_label.after(5, update_camera)
+    data_label.after(7, update_camera)
     
     if img_counter == 3:
         load_frame(data_frame, end_frame)
@@ -207,11 +186,56 @@ def take_picture(event):
         # saves the image as a png file
         path = os.path.join('images', img_name)
         cv2.imwrite(path, img_frame)
-
-        # crops image into left and right eyes
         image = cv2.imread(path)
-        left_eye = crop_left_eye(image)
-        right_eye = crop_right_eye(image)
+
+        # detect the faces in the photo
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+        if len(faces) == 0:
+            raise ValueError('No face detected')
+        
+        # variables for eyes
+        left_eye = None
+        right_eye = None
+        
+        # roi for the face
+        (x, y, w, h) = faces[0]
+        roi_gray = gray[y:y+h, x:x+w]
+        roi_color = image[y:y+h, x:x+w]
+        
+        #find the eyes in the picture
+        eyes = EYE_CASCADE.detectMultiScale(roi_gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
+        if len(eyes) < 2:
+            raise ValueError('Both eyes not detected')
+        
+        # calculation constants
+        w_shrink_factor = 1
+        h_shrink_factor = 0.45
+        margin = 5
+        
+        # eye 0 tighter restriction
+        (ex1, ey1, ew1, eh1) = eyes[0]
+        e1_width = int(ew1 * w_shrink_factor)
+        e1_height = int(eh1 * h_shrink_factor)
+        
+        e1_s = (ex1 + (ew1 - e1_width) // 2, ey1 + (eh1 - e1_height) // 2)
+        e1_f = (e1_s[0] + e1_width, e1_s[1] + e1_height)
+        
+        # eye 1 tighter restriction
+        (ex2, ey2, ew2, eh2) = eyes[1]
+        e2_width = int(ew2 * w_shrink_factor)
+        e2_height = int(eh2 * h_shrink_factor)
+        
+        e2_s = ((ex2 + (ew2 - e2_width) // 2) + margin, (ey2 + (eh2 - e2_height) // 2) + margin)
+        e2_f = ((e2_s[0] + e2_width) - margin, (e2_s[1] + e2_height) - margin)
+        
+        if ex1 < ex2:
+            left_eye = roi_color[e1_s[1]:e1_f[1], e1_s[0]:e1_f[0]]
+            right_eye = roi_color[e2_s[1]:e2_f[1], e2_s[0]:e2_f[0]]
+        else:
+            right_eye = roi_color[e1_s[1]:e1_f[1], e1_s[0]:e1_f[0]]
+            left_eye = roi_color[e2_s[1]:e2_f[1], e2_s[0]:e2_f[0]]
 
         # create template from eye crops
         crop_path = os.path.join('images', 'crop_' + img_name)
@@ -247,90 +271,6 @@ def determine_direction(x, y):
         return "south east"
     else:
         return "unknown"
-
-def readH5(path):
-    # Open the HDF5 file for reading
-    h5f = h5py.File(path, 'r')
-
-    # Read the 'images' and 'labels' datasets
-    images = h5f['images'][:]
-    labels = h5f['labels'][:]
-
-    # Close the HDF5 file
-    h5f.close()
-
-    # Display the images
-    for i in range(len(images)):
-        label = labels[i].decode()  # Decode the label from bytes to string
-        plt.figure()
-        plt.imshow(images[i])
-        plt.title(f"Label: {label}")
-        plt.show()
-
-def createH5():
-    # Define the path to the folder
-    folder_path = 'images'
-
-    # Ensure it's a directory
-    if os.path.isdir(folder_path):
-        # Loop through all files in the folder
-        for filename in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, filename)
-
-            # Check if it's an image file
-            if filename.endswith('.png') and filename.startswith('crop'):
-                # Read the image
-                image = cv2.imread(file_path)
-
-                # Convert the image to grayscale
-                grayscale_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-                # Save the grayscale image with the desired filename format
-                output_filename = f'g-{os.path.splitext(filename)[0]}.png'
-                output_path = os.path.join(folder_path, output_filename)
-                cv2.imwrite(output_path, grayscale_image)
-
-    common_size = (190, 80)
-
-    # Create a list to store resized images and labels
-    resized_images = []
-    labels = []
-
-    # Loop through the files in the directory
-    for filename in os.listdir(folder_path):
-        if filename.startswith('g-') and filename.endswith('.png'):
-            # Load the image using cv2 and resize it to the specified dimension
-            img = cv2.imread(os.path.join(folder_path, filename))
-            img = cv2.resize(img, common_size)
-            resized_images.append(img)
-
-            # Use the filename (without extension) as the label
-            label = os.path.splitext(filename)[0]
-            labels.append(label)
-
-    # Convert the lists to NumPy arrays
-    resized_images = np.array(resized_images)
-    labels = np.array(labels, dtype='S')
-
-    # Get the current date and time
-    current_datetime = datetime.datetime.now()
-
-    # Format the date and time to create a timestamp
-    timestamp = current_datetime.strftime("%Y-%m-%d_%H-%M-%S")
-
-    # Create a file name using the timestamp
-    h5path = f"image_collection{timestamp}.h5"
-    h5f = h5py.File(h5path, 'w')
-
-    # Create datasets for resized images and labels
-    h5f.create_dataset('images', data=resized_images)
-    h5f.create_dataset('labels', data=labels)
-
-    # Close the HDF5 file
-    h5f.close()
-
-    # Return path of h5 file
-    return h5path
 
 def generate_dot_position():
     global dot_x
@@ -402,64 +342,6 @@ def generate_dot_position():
     current_direction = determine_direction(dot_x, dot_y)
     return current_direction
 
-def sendEmail(path):
-    subject = "AI_Data"
-    body = "AI Training Data"
-    sender = "eyetrackerdata@gmail.com"
-    recipients = "eyetrackercollection@gmail.com"
-    password = "kjio oydv zphc tkdi"
-
-    # instance of MIMEMultipart
-    msg = MIMEMultipart()
-
-    # storing the senders email address
-    msg['From'] = sender
-
-    # storing the receivers email address
-    msg['To'] = recipients
-
-    # storing the subject
-    msg['Subject'] = subject
-
-    # attach the body with the msg instance
-    msg.attach(MIMEText(body, 'plain'))
-
-    # open the file to be sent
-    filename = path
-    attachment = open(filename, "rb")
-
-    # instance of MIMEBase and named as p
-    p = MIMEBase('image', 'plain')
-
-    # To change the payload into encoded form
-    p.set_payload(attachment.read())
-
-    # encode into base64
-    encoders.encode_base64(p)
-
-    p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
-
-    # attach the instance 'p' to instance 'msg'
-    msg.attach(p)
-
-    # creates SMTP session
-    s = smtplib.SMTP('smtp.gmail.com', 587)
-
-    # start TLS for security
-    s.starttls()
-
-    # Authentication
-    s.login(sender, password)
-
-    # Converts the Multipart msg into a string
-    text = msg.as_string()
-
-    # sending the mail
-    s.sendmail(sender, recipients, text)
-
-    # terminating the session
-    s.quit()
-
 def crop_left_eye(image):
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
@@ -474,7 +356,7 @@ def crop_left_eye(image):
     roi_gray = gray[y:y+h, x:x+w]
     roi_color = image[y:y+h, x:x+w]
 
-    eyes = EYE_CASCADE.detectMultiScale(roi_gray)
+    eyes = EYE_CASCADE.detectMultiScale(roi_gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
 
     if len(eyes) < 2:
         raise ValueError('Both eyes not detected')
@@ -503,7 +385,7 @@ def crop_right_eye(image):
     roi_gray = gray[y:y + h, x:x + w]
     roi_color = image[y:y + h, x:x + w]
 
-    eyes = EYE_CASCADE.detectMultiScale(roi_gray)
+    eyes = EYE_CASCADE.detectMultiScale(roi_gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
 
     if len(eyes) < 2:
         raise ValueError('Both eyes not detected')
@@ -519,22 +401,19 @@ def crop_right_eye(image):
     return right_eye
 
 def create_eye_template(left_eye, right_eye, output_path):
-    # Resize images to have the same height
-    height = max(left_eye.shape[0], right_eye.shape[0])
-    left_eye_resized = cv2.resize(left_eye, (0, 0), fx=height / left_eye.shape[0], fy=height / left_eye.shape[0])
-    right_eye_resized = cv2.resize(right_eye, (0, 0), fx=height / right_eye.shape[0], fy=height / right_eye.shape[0])
+    # width and height of new image
+    total_width = left_eye.shape[1] + right_eye.shape[1]
+    max_height = max(left_eye.shape[0], right_eye.shape[0])
 
-    # Calculate the width of the composite image
-    width = left_eye_resized.shape[1] + right_eye_resized.shape[1] + 35
+    composite_image = np.zeros((max_height, total_width, 3), dtype=np.uint8)
 
-    # Create a black background image
-    composite_image = np.zeros((height, width, 3), dtype=np.uint8)
+    # paste left_eye
+    composite_image[:left_eye.shape[0], :left_eye.shape[1]] = left_eye
 
-    # Place the left and right eyes on the composite image
-    composite_image[0:right_eye_resized.shape[0], 0:right_eye_resized.shape[1]] = right_eye_resized
-    composite_image[0:left_eye_resized.shape[0], left_eye_resized.shape[1] + 35:] = left_eye_resized
+    # paste right eye
+    composite_image[:right_eye.shape[0], left_eye.shape[1]:] = right_eye
 
-    # Save the composite image in the filename
+    # save the composite image
     cv2.imwrite(output_path, composite_image)
 
 # widgets contained in each frame
