@@ -2,7 +2,6 @@
 # All this does is take a picture and saves it to the folder "data_images"
 import os
 import shutil
-import customtkinter as ctk
 import tkinter as tk
 import numpy as np
 import cv2
@@ -11,7 +10,7 @@ import math
 from PIL import Image, ImageTk
 import platform
 import ctypes
-from Functions import sendEmail, createH5, readH5
+from Functions import sendEmail, createH5, readH5, crop_eyes, eye_template
 
 # app initialization
 isWindows = platform.system() == "Windows"
@@ -19,7 +18,7 @@ isWindows = platform.system() == "Windows"
 if isWindows:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
 
-app = ctk.CTk()
+app = tk.Tk()
 
 if isWindows:
     app.after(0, lambda: app.state('zoomed'))
@@ -40,8 +39,6 @@ img_counter = 0
 EYE_CASCADE = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
 
 # app window setup
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
 app.title("aiTracker Data Collection")
 
 # counter information
@@ -63,10 +60,10 @@ dot_x = 0
 dot_y = 0
 
 # frame instantiations
-consent_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
-instructions_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
-data_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
-end_frame = ctk.CTkFrame(master=app, width=WIDTH, height=HEIGHT)
+consent_frame = tk.Frame(master=app, width=WIDTH, height=HEIGHT)
+instructions_frame = tk.Frame(master=app, width=WIDTH, height=HEIGHT)
+data_frame = tk.Frame(master=app, width=WIDTH, height=HEIGHT)
+end_frame = tk.Frame(master=app, width=WIDTH, height=HEIGHT)
 current_frame = consent_frame
 
 # strings for the different frames
@@ -122,7 +119,7 @@ def update_camera():
         img = Image.fromarray(img)
         img = ImageTk.PhotoImage(image=img)
         data_label.configure(image=img)
-        #data_label.image = img
+        data_label.image = img
     # after a defined number of milliseconds, run this function again
     data_label.after(7, update_camera)
     
@@ -132,7 +129,7 @@ def update_camera():
 
         if current_frame == end_frame:
             h5path = createH5()
-            sendEmail(h5path)
+            #sendEmail(h5path)
             readH5(h5path)
 
             # delete the h5 file after it has been sent
@@ -192,14 +189,16 @@ def take_picture(event):
         path = os.path.join('images', img_name)
         cv2.imwrite(path, img_frame)
         image = cv2.imread(path)
-
-        # images of each eye
-        left_eye = crop_left_eye(image)
-        right_eye = crop_right_eye(image)
-
-        # create template from eye crops
         crop_path = os.path.join('images', 'crop_' + img_name)
-        create_eye_template(left_eye, right_eye, crop_path)
+
+        # crop and save eyes
+        # left_eye = crop_left_eye(image)
+        # right_eye = crop_right_eye(image)
+        # create_eye_template(left_eye, right_eye, crop_path)
+        
+        # crop and save eyes method 2
+        eyes = crop_eyes(image)
+        eye_template(eyes[0], eyes[1], crop_path)
 
         current_direction = generate_dot_position()
         while current_direction == "unknown":
@@ -372,7 +371,7 @@ def create_eye_template(left_eye, right_eye, output_path):
     width = left_eye_resized.shape[1] + right_eye_resized.shape[1]
 
     # Create a black background image
-    composite_image = np.zeros((height, width, 3), dtype=np.uint8)
+    composite_image = np.zeros((height, width), dtype=np.uint8)
 
     # Place the left and right eyes on the composite image
     composite_image[0:right_eye_resized.shape[0], 0:right_eye_resized.shape[1]] = right_eye_resized
@@ -383,35 +382,35 @@ def create_eye_template(left_eye, right_eye, output_path):
 
 # widgets contained in each frame
 # consent frame
-consent_text = ctk.CTkLabel(consent_frame, text=consent_string)
+consent_text = tk.Label(consent_frame, text=consent_string)
 consent_text.configure(wraplength=500)
-consent_button = ctk.CTkButton(consent_frame, text="Consent", corner_radius=10,
+consent_button = tk.Button(consent_frame, text="Consent",
                               command=lambda: load_frame(consent_frame, instructions_frame))
-quit_button = ctk.CTkButton(consent_frame, text="Quit", corner_radius=10, command=lambda: app.destroy())
+quit_button = tk.Button(consent_frame, text="Quit", command=lambda: app.destroy())
 
-consent_text.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
-consent_button.place(relx=.75, rely=0.9, anchor=ctk.CENTER)
-quit_button.place(relx=.25, rely=0.9, anchor=ctk.CENTER)
+consent_text.place(relx=.5, rely=0.45, anchor=tk.CENTER)
+consent_button.place(relx=.75, rely=0.9, anchor=tk.CENTER)
+quit_button.place(relx=.25, rely=0.9, anchor=tk.CENTER)
 
 # instructions frame
-instructions_label = ctk.CTkLabel(instructions_frame, text=instructions_string)
+instructions_label = tk.Label(instructions_frame, text=instructions_string)
 instructions_label.configure(wraplength=500)
-instructions_button = ctk.CTkButton(instructions_frame, text="Continue", corner_radius=10,
+instructions_button = tk.Button(instructions_frame, text="Continue",
                                    command=lambda: load_frame(instructions_frame, data_frame))
 
-instructions_label.place(relx=.5, rely=0.45, anchor=ctk.CENTER)
-instructions_button.place(relx=.5, rely=0.9, anchor=ctk.CENTER)
+instructions_label.place(relx=.5, rely=0.45, anchor=tk.CENTER)
+instructions_button.place(relx=.5, rely=0.9, anchor=tk.CENTER)
 
 # data collection frame
 app.bind("<Key-space>", take_picture)
-data_label = ctk.CTkLabel(data_frame, text="")
-dot_label = ctk.CTkLabel(data_frame, text="")
+data_label = tk.Label(data_frame, text="")
+dot_label = tk.Label(data_frame, text="")
 dot_label.configure(image=dot_image)
 data_label.grid(column=0, row=0)
 
 # program finished frame
-finished_text = ctk.CTkLabel(end_frame, text=end_string)
-finished_text.place(relx=.5, rely=.5, anchor=ctk.CENTER)
+finished_text = tk.Label(end_frame, text=end_string)
+finished_text.place(relx=.5, rely=.5, anchor=tk.CENTER)
 
 # application start code
 consent_frame.pack()
