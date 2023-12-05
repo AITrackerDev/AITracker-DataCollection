@@ -14,6 +14,7 @@ import dlib
 EYES_DETECTOR = dlib.get_frontal_face_detector()
 LANDMARK_PREDICTOR = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
+
 def sendEmail(path):
     subject = "AI_Data"
     body = "AI Training Data"
@@ -160,10 +161,9 @@ def crop_eyes(image):
     # grayscale image
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
-    # dlib faces and landmarks
+    # dlib face and landmarks
     faces = EYES_DETECTOR(gray)
     landmarks = LANDMARK_PREDICTOR(gray, faces[0])
-    
     pad = 5
     
     left_eye = (
@@ -180,14 +180,7 @@ def crop_eyes(image):
         landmarks.part(45).x + pad, landmarks.part(47).y + pad
     )
     
-    # left eye midpoint information
-    left_eye_height_midpoint = (left_eye[0] + left_eye[2]) // 2
-    left_eye_width_midpoint = (left_eye[1] + left_eye[3]) // 2
-    
-    # right eye midpoint information
-    right_eye_height_midpoint = (right_eye[0] + right_eye[2]) // 2
-    right_eye_width_midpoint = (right_eye[1] + right_eye[3]) // 2
-    
+    # get separate images for each eye
     # [start_y:end_y, start_x:end_x]
     left_eye_region = gray[left_eye[1]:left_eye[3], left_eye[0]:left_eye[2]]
     right_eye_region = gray[right_eye[1]:right_eye[3], right_eye[0]:right_eye[2]]
@@ -195,16 +188,16 @@ def crop_eyes(image):
     return (left_eye_region, right_eye_region)
 
 def eye_template(left_eye, right_eye, output_path):
-    # Resize images to have the same height
+    # composite image height and width
     height = max(left_eye.shape[0], right_eye.shape[0])
-    # Calculate the width of the composite image
     width = left_eye.shape[1] + right_eye.shape[1]
 
-    # Create a black background image
+    # create a blank image to put data into
     composite_image = np.zeros((height, width), dtype=np.uint8)
 
+    # put left and right eyes in the image side by side
     composite_image[:left_eye.shape[0], :left_eye.shape[1]] = left_eye
     composite_image[:right_eye.shape[0], left_eye.shape[1]:] = right_eye
 
-    # Save the composite image in the filename
+    # save the composite image
     cv2.imwrite(output_path, composite_image)

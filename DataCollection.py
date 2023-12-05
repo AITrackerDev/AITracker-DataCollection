@@ -30,6 +30,7 @@ WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
 print(f"Width: {WIDTH}, Height: {HEIGHT}")
 ASSETS_PATH = "assets/"
 STATIC_DOT = True
+NUM_PICTURES = 3
 
 # webcam and current image frame setup
 global current_frame
@@ -68,7 +69,7 @@ current_frame = consent_frame
 
 # strings for the different frames
 consent_string = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
-instructions_string = "After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat approximately 50 times. Please ensure you are in bright lighting, and that both green squares are visible around your eyes."
+instructions_string = f"After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat {NUM_PICTURES} times. Please ensure you are in bright lighting, and that both green squares are visible around your eyes."
 end_string = "Thank you for helping us collect data for our neural network! If you can see this message, the application is safe to close."
 
 # create directory for images
@@ -123,7 +124,7 @@ def update_camera():
     # after a defined number of milliseconds, run this function again
     data_label.after(7, update_camera)
     
-    if img_counter == 3:
+    if img_counter == NUM_PICTURES:
         load_frame(data_frame, end_frame)
         cam.release()
 
