@@ -69,7 +69,7 @@ current_frame = consent_frame
 
 # strings for the different frames
 consent_string = "By continuing to use this application, you understand that the photos gathered by this application will be used to train a neural network designed to detect the direction someone is looking. Do you consent?"
-instructions_string = f"After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat {NUM_PICTURES} times. Please ensure you are in bright lighting, and that both green squares are visible around your eyes."
+instructions_string = f"After clicking continue, the app will generate a random dot on the screen. While looking at it, press the space bar once, and a picture will be taken and a new dot will be generated in a new location. This process will repeat {NUM_PICTURES} times. Please ensure you are in bright lighting, and that both green squares are visible around your eyes. Also please be sure to keep your head still when collecting data."
 end_string = "Thank you for helping us collect data for our neural network! If you can see this message, the application is safe to close."
 
 # create directory for images
@@ -238,7 +238,7 @@ def generate_dot_position():
     
     #spawns the dot at a random static point within the window
     if STATIC_DOT:
-        dir = rand.randint(0, 8)
+        dir = rand.randint(0, 9)
         if dir == 0:
             dot_x = 0
             dot_y = 0
@@ -266,6 +266,9 @@ def generate_dot_position():
         elif dir == 8:
             dot_x = WIDTH - dot_picture.width
             dot_y = HEIGHT - dot_picture.height
+        elif dir == 9:
+            dot_x = (WIDTH/2) - (dot_picture.width/2)
+            dot_y = (HEIGHT/2) - (dot_picture.height/2)
 
         print(f"Direction: {dir} X: {dot_x} Y:{dot_y}")
     else:
