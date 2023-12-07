@@ -23,7 +23,7 @@ app.wm_attributes("-fullscreen", True)
 
 # application setup variables
 WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
-print(f"Width: {WIDTH}, Height: {HEIGHT}")
+#print(f"Width: {WIDTH}, Height: {HEIGHT}")
 ASSETS_PATH = "assets/"
 STATIC_DOT = True
 NUM_PICTURES = 20
@@ -51,7 +51,7 @@ c_counter = 0
 
 # dot information
 dot_picture = Image.open(ASSETS_PATH + "dot.png")
-print(f'DotWidth: {dot_picture.width} DotHeight: {dot_picture.height}')
+#print(f'DotWidth: {dot_picture.width} DotHeight: {dot_picture.height}')
 dot_image = ImageTk.PhotoImage(dot_picture)
 dot_x = 0
 dot_y = 0
@@ -266,7 +266,7 @@ def generate_dot_position():
             dot_x = (WIDTH/2) - (dot_picture.width/2)
             dot_y = (HEIGHT/2) - (dot_picture.height/2)
 
-        print(f"Direction: {dir} X: {dot_x} Y:{dot_y}")
+        #print(f"Direction: {dir} X: {dot_x} Y:{dot_y}")
     else:
         #divisions of the screen
         div_amount = 8
