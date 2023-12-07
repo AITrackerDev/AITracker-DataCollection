@@ -126,7 +126,7 @@ def update_camera():
 
         if current_frame == end_frame:
             h5path = createH5()
-            #sendEmail(h5path)
+            sendEmail(h5path)
             readH5(h5path)
 
             # delete the h5 file after it has been sent
@@ -188,14 +188,14 @@ def take_picture(event):
         image = cv2.imread(path)
         crop_path = os.path.join('images', 'crop_' + img_name)
 
-        # crop and save eyes
+        # # crop and save eyes
         # left_eye = crop_left_eye(image)
         # right_eye = crop_right_eye(image)
         # create_eye_template(left_eye, right_eye, crop_path)
         
         # crop and save eyes method 2
         eyes = crop_eyes(image)
-        eye_template(eyes[0], eyes[1], crop_path)
+        create_eye_template(eyes[0], eyes[1], crop_path)
 
         current_direction = generate_dot_position()
         while current_direction == "unknown":
@@ -366,19 +366,20 @@ def create_eye_template(left_eye, right_eye, output_path):
     height = max(left_eye.shape[0], right_eye.shape[0])
     left_eye_resized = cv2.resize(left_eye, (0, 0), fx=height / left_eye.shape[0], fy=height / left_eye.shape[0])
     right_eye_resized = cv2.resize(right_eye, (0, 0), fx=height / right_eye.shape[0], fy=height / right_eye.shape[0])
-    
+
     # Calculate the width of the composite image
-    width = left_eye_resized.shape[1] + right_eye_resized.shape[1]
+    width = left_eye_resized.shape[1] + right_eye_resized.shape[1] + 5
 
     # Create a black background image
     composite_image = np.zeros((height, width), dtype=np.uint8)
 
     # Place the left and right eyes on the composite image
-    composite_image[0:right_eye_resized.shape[0], 0:right_eye_resized.shape[1]] = right_eye_resized
-    composite_image[0:left_eye_resized.shape[0], left_eye_resized.shape[1]:] = left_eye_resized
+    composite_image[0:left_eye_resized.shape[0], 0:left_eye_resized.shape[1]] = left_eye_resized
+    composite_image[0:right_eye_resized.shape[0], left_eye_resized.shape[1] + 5:] = right_eye_resized
 
     # Save the composite image in the filename
     cv2.imwrite(output_path, composite_image)
+
 
 # widgets contained in each frame
 # consent frame

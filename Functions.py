@@ -22,6 +22,8 @@ def sendEmail(path):
     recipients = "eyetrackercollection@gmail.com"
     password = "kjio oydv zphc tkdi"
 
+    print("EMAIL")
+
     # instance of MIMEMultipart
     msg = MIMEMultipart()
 
