@@ -19,18 +19,14 @@ if isWindows:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
 
 app = tk.Tk()
-
-if isWindows:
-    app.after(0, lambda: app.state('zoomed'))
-else:
-    app.wm_attributes("-fullscreen", True)
+app.wm_attributes("-fullscreen", True)
 
 # application setup variables
 WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
 print(f"Width: {WIDTH}, Height: {HEIGHT}")
 ASSETS_PATH = "assets/"
 STATIC_DOT = True
-NUM_PICTURES = 3
+NUM_PICTURES = 20
 
 # webcam and current image frame setup
 global current_frame
@@ -414,7 +410,9 @@ data_label.grid(column=0, row=0)
 
 # program finished frame
 finished_text = tk.Label(end_frame, text=end_string)
+finished_button = tk.Button(end_frame, text="Quit", command=lambda: app.quit())
 finished_text.place(relx=.5, rely=.5, anchor=tk.CENTER)
+finished_button.place(relx=.5, rely=.75, anchor=tk.CENTER)
 
 # application start code
 consent_frame.pack()
