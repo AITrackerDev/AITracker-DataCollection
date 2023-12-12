@@ -1,0 +1,7 @@
+dlib == 19.24.2
+opencv-python == 4.8.1.78
+numpy == 1.25.2
+h5py == 3.10.0
+pillow == 10.1.0
+matplatlib == 3.8.1
+tk == 0.1.0

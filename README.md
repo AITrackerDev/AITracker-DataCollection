@@ -14,7 +14,9 @@ As for MacOS, the easiest way to install Python is through Homebrew. The command
 ### Libraries and Packages
 This project relies on a few different libraries installed via pip. To make the process easier, the following command will take care of all the necessary installations at once.
 
-`pip install numpy opencv-python h5py matplotlib pillow tk dlib`
+`pip install -r requirements.txt`
+
+On Windows, there may be an error regarding installing dlib. To fix this, [this article](https://medium.com/analytics-vidhya/how-to-install-dlib-library-for-python-in-windows-10-57348ba1117f) does a good job in explaining what goes wrong and how to fix it.
 
 ## How to run
 
