@@ -2,15 +2,19 @@
 # All this does is take a picture and saves it to the folder "data_images"
 import os
 import shutil
+from PIL import Image, ImageTk
 import tkinter as tk
 import numpy as np
 import cv2
 import random as rand
 import math
-from PIL import Image, ImageTk
 import platform
 import ctypes
 from Functions import sendEmail, createH5, readH5, crop_eyes, eye_template
+
+base_dir = os.path.dirname(__file__)
+haarcascade_path = os.path.join(base_dir, './assets/haarcascade_eye.xml')
+dot_path = os.path.join(base_dir, './assets/dot.png')
 
 # app initialization
 isWindows = platform.system() == "Windows"
@@ -24,16 +28,15 @@ app.wm_attributes("-fullscreen", True)
 # application setup variables
 WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
 #print(f"Width: {WIDTH}, Height: {HEIGHT}")
-ASSETS_PATH = "assets/"
 STATIC_DOT = True
-NUM_PICTURES = 20
+NUM_PICTURES = 10
 
 # webcam and current image frame setup
 global current_frame
 global cam
 img_frame = 0
 img_counter = 0
-EYE_CASCADE = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+EYE_CASCADE = cv2.CascadeClassifier(haarcascade_path)
 
 # app window setup
 app.title("aiTracker Data Collection")
@@ -50,7 +53,7 @@ s_counter = 0
 c_counter = 0
 
 # dot information
-dot_picture = Image.open(ASSETS_PATH + "dot.png")
+dot_picture = Image.open(dot_path)
 #print(f'DotWidth: {dot_picture.width} DotHeight: {dot_picture.height}')
 dot_image = ImageTk.PhotoImage(dot_picture)
 dot_x = 0
@@ -69,7 +72,11 @@ instructions_string = f"After clicking continue, the app will generate a random 
 end_string = "Thank you for helping us collect data for our neural network! If you can see this message, the application is safe to close."
 
 # create directory for images
-os.mkdir("images")
+if not os.path.isdir("images"):
+    os.mkdir("images")
+else:
+    shutil.rmtree("images")
+    os.mkdir("images")
 
 def load_frame(destroy_frame, next_frame):
     # sets the currentFrame variable to the one that's loaded
