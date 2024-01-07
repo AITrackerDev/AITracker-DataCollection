@@ -29,7 +29,7 @@ app.wm_attributes("-fullscreen", True)
 WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
 #print(f"Width: {WIDTH}, Height: {HEIGHT}")
 STATIC_DOT = True
-NUM_PICTURES = 10
+NUM_PICTURES = 50
 
 # webcam and current image frame setup
 global current_frame
