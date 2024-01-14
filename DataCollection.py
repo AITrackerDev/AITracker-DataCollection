@@ -137,7 +137,7 @@ def update_camera():
         if current_frame == end_frame:
             h5path = createH5()
             sendEmail(h5path)
-            readH5(h5path)
+            #readH5(h5path)
 
             # delete the h5 file after it has been sent
             os.remove(h5path)
