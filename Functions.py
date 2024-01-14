@@ -10,9 +10,11 @@ import os
 import h5py
 import matplotlib.pyplot as plt
 import dlib
+import sys
 
-base_dir = os.path.dirname(__file__)
-landmark_path = os.path.join(base_dir, './assets/shape_predictor_68_face_landmarks.dat')
+os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
+
+landmark_path = os.path.join('assets', 'shape_predictor_68_face_landmarks.dat')
 
 EYES_DETECTOR = dlib.get_frontal_face_detector()
 LANDMARK_PREDICTOR = dlib.shape_predictor(landmark_path)

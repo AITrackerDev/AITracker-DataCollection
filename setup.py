@@ -1,12 +1,18 @@
-from setuptools import setup
+from cx_Freeze import setup, Executable
 
-APP = ['DataCollection.py']
-DATA_FILES = ['assets/shape_predictor_68_face_landmarks.dat', 'assets/dot.png', 'assets/haarcascade_eye.xml']
-OPTIONS = {'packages' : ['Functions.py'], 'argv_emulation': True}
+# Dependencies are automatically detected, but it might need
+# fine tuning.
+build_options = {'packages': [], 'excludes': [], "include_files": ["assets/"]}
 
-setup(
-    app=APP,
-    data_files=DATA_FILES,
-    options={'py2app': OPTIONS},
-    setup_requires=['py2app']
-)
+import sys
+base = 'Win32GUI' if sys.platform=='win32' else None
+
+executables = [
+    Executable('DataCollection.py', base=base)
+]
+
+setup(name='aiTracker-DataCollection',
+      version = '1',
+      description = 'Application to collect data for the aiTracker neural network',
+      options = {'build_exe': build_options},
+      executables = executables)

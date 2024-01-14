@@ -10,11 +10,14 @@ import random as rand
 import math
 import platform
 import ctypes
+import sys
 from Functions import sendEmail, createH5, readH5, crop_eyes, eye_template
 
-base_dir = os.path.dirname(__file__)
-haarcascade_path = os.path.join(base_dir, './assets/haarcascade_eye.xml')
-dot_path = os.path.join(base_dir, './assets/dot.png')
+# change directory to where this file is located
+os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
+
+haarcascade_path = os.path.join('assets', 'haarcascade_eye.xml')
+dot_path = os.path.join('assets', 'dot.png')
 
 # app initialization
 isWindows = platform.system() == "Windows"
