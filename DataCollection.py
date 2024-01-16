@@ -26,6 +26,10 @@ if isWindows:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
 
 app = tk.Tk()
+app.geometry("1080x720")
+app.attributes('-topmost', 1)
+app.update()
+app.attributes('-topmost', 0)
 app.wm_attributes("-fullscreen", True)
 
 # application setup variables
