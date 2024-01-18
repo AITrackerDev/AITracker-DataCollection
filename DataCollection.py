@@ -34,7 +34,7 @@ WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
 #print(f"Width: {WIDTH}, Height: {HEIGHT}")
 ASSETS_PATH = "assets/"
 STATIC_DOT = True
-NUM_PICTURES = 20
+NUM_PICTURES = 10
 
 EYES_DETECTOR = dlib.get_frontal_face_detector()
 LANDMARK_PREDICTOR = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
