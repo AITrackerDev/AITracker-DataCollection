@@ -9,8 +9,13 @@ out/
 TestResources/
 _site
 .DS_Store
-.vscode
+.vscode/
 *.hdf5
-.idea
+.idea/
 test.py
-__pycache__
+__pycache__/
+env/
+.eggs/
+setup.py
+build/
+dist/

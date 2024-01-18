@@ -10,10 +10,14 @@ import os
 import h5py
 import matplotlib.pyplot as plt
 import dlib
+import sys
+
+os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
+
+landmark_path = os.path.join('assets', 'shape_predictor_68_face_landmarks.dat')
 
 EYES_DETECTOR = dlib.get_frontal_face_detector()
-LANDMARK_PREDICTOR = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
-
+LANDMARK_PREDICTOR = dlib.shape_predictor(landmark_path)
 
 def sendEmail(path):
     subject = "AI_Data"
