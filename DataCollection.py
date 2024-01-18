@@ -48,7 +48,8 @@ STATIC_DOT = True
 NUM_PICTURES = 10
 
 EYES_DETECTOR = dlib.get_frontal_face_detector()
-LANDMARK_PREDICTOR = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+predictor_path = os.path.join('assets', 'shape_predictor_68_face_landmarks.dat')
+LANDMARK_PREDICTOR = dlib.shape_predictor(predictor_path)
 NUM_PICTURES = 50
 
 # webcam and current image frame setup
