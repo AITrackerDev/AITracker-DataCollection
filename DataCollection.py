@@ -43,14 +43,13 @@ app.wm_attributes("-fullscreen", True)
 
 # application setup variables
 WIDTH, HEIGHT = app.winfo_screenwidth(), app.winfo_screenheight()
-#print(f"Width: {WIDTH}, Height: {HEIGHT}")
 STATIC_DOT = True
 NUM_PICTURES = 10
 
 EYES_DETECTOR = dlib.get_frontal_face_detector()
 predictor_path = os.path.join('assets', 'shape_predictor_68_face_landmarks.dat')
 LANDMARK_PREDICTOR = dlib.shape_predictor(predictor_path)
-NUM_PICTURES = 50
+NUM_PICTURES = 100
 
 # webcam and current image frame setup
 global current_frame
@@ -75,7 +74,6 @@ c_counter = 0
 
 # dot information
 dot_picture = Image.open(dot_path)
-#print(f'DotWidth: {dot_picture.width} DotHeight: {dot_picture.height}')
 dot_image = ImageTk.PhotoImage(dot_picture)
 dot_x = 0
 dot_y = 0
@@ -146,7 +144,7 @@ def update_camera():
         data_label.configure(image=img)
         data_label.image = img
     # after a defined number of milliseconds, run this function again
-    data_label.after(7, update_camera)
+    data_label.after(4, update_camera)
     
     if img_counter == NUM_PICTURES:
         load_frame(data_frame, end_frame)
@@ -215,122 +213,58 @@ def take_picture(event):
         cv2.imwrite(path, img_frame)
         image = cv2.imread(path)
         crop_path = os.path.join('images', 'crop_' + img_name)
-
-        # # crop and save eyes
-        # left_eye = crop_left_eye(image)
-        # right_eye = crop_right_eye(image)
-        # create_eye_template(left_eye, right_eye, crop_path)
         
         # crop and save eyes method 2
         eyes = crop_eyes(image)
         create_eye_template(eyes[0], eyes[1], crop_path)
 
         current_direction = generate_dot_position()
-        while current_direction == "unknown":
-            current_direction = generate_dot_position()
 
         dot_label.place(x=dot_x, y=dot_y)
-
-def determine_direction(x, y):
-    div_amount = 8
-    rect_width =  math.floor(WIDTH/div_amount)
-    rect_height = math.floor(HEIGHT/div_amount)
-    if x < rect_width and y < rect_height:
-        return "north west"
-    elif x < rect_width and y < (div_amount - 1) * rect_height and y > rect_height:
-        return "west"
-    elif x < rect_width and y < (div_amount) * rect_height and y > (div_amount - 1) * rect_height:
-        return "south west"
-    elif x < (div_amount - 1) * rect_width and x > rect_width and y < rect_height:
-        return "north"
-    elif x < (div_amount - 5) * rect_width and x > (div_amount - 3) * rect_width and y < (div_amount - 5) * rect_height and y > (div_amount - 3) * rect_height:
-        return "center"
-    elif x < (div_amount - 1) * rect_width and x > rect_width and y < (div_amount) * rect_height and y > (div_amount - 1) * rect_height:
-        return "south"
-    elif x < 3 * rect_width and x > (div_amount - 1) * rect_width and y < rect_height:
-        return "north east"
-    elif x < 3 * rect_width and x > (div_amount - 1) * rect_width and y < (div_amount - 1) * rect_height and y > rect_height:
-        return "east"
-    elif x < (div_amount) * rect_width and x > (div_amount - 1) * rect_width and y < (div_amount) * rect_height and y > (div_amount - 1) * rect_height:
-        return "south east"
-    else:
-        return "unknown"
 
 def generate_dot_position():
     global dot_x
     global dot_y
     
-    #spawns the dot at a random static point within the window
-    if STATIC_DOT:
-        dir = rand.randint(0, 9)
-        if dir == 0:
-            dot_x = 0
-            dot_y = 0
-        elif dir == 1:
-            dot_x = (WIDTH/2) - (dot_picture.width/2)
-            dot_y = 0 
-        elif dir == 2:
-            dot_x = WIDTH - dot_picture.width
-            dot_y = 0
-        elif dir == 3:
-            dot_x = 0
-            dot_y = (HEIGHT/2) - (dot_picture.height/2)
-        elif dir == 4:
-            dot_x = (WIDTH/2) - (dot_picture.width/2)
-            dot_y = (HEIGHT/2) - (dot_picture.height/2)
-        elif dir == 5:
-            dot_x = WIDTH - dot_picture.width
-            dot_y = (HEIGHT/2) - (dot_picture.height/2)
-        elif dir == 6:
-            dot_x = 0
-            dot_y = HEIGHT - dot_picture.height
-        elif dir == 7:
-            dot_x = (WIDTH/2) - (dot_picture.width/2)
-            dot_y = HEIGHT - dot_picture.height
-        elif dir == 8:
-            dot_x = WIDTH - dot_picture.width
-            dot_y = HEIGHT - dot_picture.height
-        elif dir == 9:
-            dot_x = (WIDTH/2) - (dot_picture.width/2)
-            dot_y = (HEIGHT/2) - (dot_picture.height/2)
-
-        #print(f"Direction: {dir} X: {dot_x} Y:{dot_y}")
-    else:
-        #divisions of the screen
-        div_amount = 8
-        x_div = math.floor(WIDTH/div_amount)
-        y_div = math.floor(HEIGHT/div_amount)
-        
-        #determines the direction to spawn the dot in 
-        dir = rand.randint(0, 4)
-        if dir == 0:
-            dot_x = rand.randint(0, x_div)
-            dot_y = rand.randint(0, HEIGHT)   
-        elif dir == 1:
-            dot_x = rand.randint((div_amount - 1) * x_div, WIDTH)
-            dot_y = rand.randint(0, HEIGHT)
-        elif dir == 2:
-            dot_x = rand.randint(0, WIDTH)
-            dot_y = rand.randint(0, y_div) 
-        elif dir == 3:
-            dot_x = rand.randint(0, WIDTH)
-            dot_y = rand.randint((div_amount - 1) * y_div, HEIGHT)
-        elif dir == 4:
-            dot_x = rand.randint((div_amount - 5) * x_div, (div_amount - 3) * x_div)
-            dot_y = rand.randint((div_amount - 5) * y_div, (div_amount - 3) * y_div)
-
-    #check if the dot will be invisible on the screen and modify the corresponding value
-    if dot_x + dot_picture.width > WIDTH:
-        dot_x = WIDTH - dot_picture.width
-    elif dot_x + dot_picture.width < 0:
+    current_direction = None
+    dir = rand.randint(0, 8)
+    if dir == 0: #north west
         dot_x = 0
-    if dot_y + dot_picture.height > HEIGHT:
-        dot_y = HEIGHT - dot_picture.height
-    elif dot_y + dot_picture.height < 0:
         dot_y = 0
-    current_direction = determine_direction(dot_x, dot_y)
+        current_direction = 'north west'
+    elif dir == 1: # north
+        dot_x = (WIDTH/2) - (dot_picture.width/2)
+        dot_y = 0 
+        current_direction = 'north'
+    elif dir == 2: # north east
+        dot_x = WIDTH - dot_picture.width
+        dot_y = 0
+        current_direction = 'north east'
+    elif dir == 3: # west
+        dot_x = 0
+        dot_y = (HEIGHT/2) - (dot_picture.height/2)
+        current_direction = 'west'
+    elif dir == 4: # center
+        dot_x = (WIDTH/2) - (dot_picture.width/2)
+        dot_y = (HEIGHT/2) - (dot_picture.height/2)
+        current_direction = 'center'
+    elif dir == 5: # east
+        dot_x = WIDTH - dot_picture.width
+        dot_y = (HEIGHT/2) - (dot_picture.height/2)
+        current_direction = 'east'
+    elif dir == 6: # south west
+        dot_x = 0
+        dot_y = HEIGHT - dot_picture.height
+        current_direction = 'south west'
+    elif dir == 7: # south
+        dot_x = (WIDTH/2) - (dot_picture.width/2)
+        dot_y = HEIGHT - dot_picture.height
+        current_direction = 'south'
+    elif dir == 8: # south east
+        dot_x = WIDTH - dot_picture.width
+        dot_y = HEIGHT - dot_picture.height
+        current_direction = 'south east'
     return current_direction
-
 
 def sendEmail(path):
     subject = "AI_Data"
@@ -389,7 +323,6 @@ def sendEmail(path):
 
     # terminating the session
     s.quit()
-
 
 def createH5():
     # Define the path to the folder
@@ -456,7 +389,6 @@ def createH5():
     # Return path of h5 file
     return h5path
 
-
 def readH5(path):
     # Open the HDF5 file for reading
     h5f = h5py.File(path, 'r')
@@ -475,7 +407,6 @@ def readH5(path):
         plt.imshow(images[i])
         plt.title(f"Label: {label}")
         plt.show()
-
 
 def crop_eyes(image):
     # grayscale image
@@ -507,64 +438,6 @@ def crop_eyes(image):
 
     return (left_eye_region, right_eye_region)
 
-def crop_left_eye(image):
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
-    if len(faces) == 0:
-        raise ValueError('No face detected')
-
-    (x, y, w, h) = faces[0]
-
-    roi_gray = gray[y:y+h, x:x+w]
-    roi_color = image[y:y+h, x:x+w]
-
-    eyes = EYE_CASCADE.detectMultiScale(roi_gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
-
-    if len(eyes) < 2:
-        raise ValueError('Both eyes not detected')
-
-    (ex1, ey1, ew1, eh1) = eyes[0]
-    (ex2, ey2, ew2, eh2) = eyes[1]
-
-    if ex1 > ex2:
-        left_eye = roi_color[ey1:ey1+eh1, ex1:ex1+ew1]
-    else:
-        left_eye = roi_color[ey2:ey2+eh2, ex2:ex2+ew2]
-
-    return left_eye
-
-def crop_right_eye(image):
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-
-    if len(faces) == 0:
-        raise ValueError('No face detected')
-
-    (x, y, w, h) = faces[0]
-
-    roi_gray = gray[y:y + h, x:x + w]
-    roi_color = image[y:y + h, x:x + w]
-
-    eyes = EYE_CASCADE.detectMultiScale(roi_gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
-
-    if len(eyes) < 2:
-        raise ValueError('Both eyes not detected')
-
-    (ex1, ey1, ew1, eh1) = eyes[0]
-    (ex2, ey2, ew2, eh2) = eyes[1]
-
-    if ex1 > ex2:
-        right_eye = roi_color[ey2:ey2 + eh2, ex2:ex2 + ew2]
-    else:
-        right_eye = roi_color[ey1:ey1 + eh1, ex1:ex1 + ew1]
-
-    return right_eye
-
 def create_eye_template(left_eye, right_eye, output_path):
     # Resize images to have the same height
     height = max(left_eye.shape[0], right_eye.shape[0])
@@ -583,8 +456,6 @@ def create_eye_template(left_eye, right_eye, output_path):
 
     # Save the composite image in the filename
     cv2.imwrite(output_path, composite_image)
-
-    print(f'Width: {width}  Height: {height}')
 
 
 # widgets contained in each frame
@@ -624,8 +495,6 @@ finished_button.place(relx=.5, rely=.75, anchor=tk.CENTER)
 # application start code
 consent_frame.pack()
 current_direction = generate_dot_position()
-while current_direction == "unknown":
-    current_direction = generate_dot_position()
 
 dot_label.place(x=dot_x, y=dot_y)
 app.mainloop()
