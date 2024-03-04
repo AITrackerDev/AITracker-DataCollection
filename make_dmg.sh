@@ -1,12 +1,22 @@
 #!/bin/sh
 
+# compile python script from spec file
 pyinstaller AITracker-DataCollection.spec
 
+# remove compiled binary
 directory=$(PWD)
 cd dist
 rm AITracker-DataCollection
+
+# create assets folder in the compiled app
+cd "AITracker-DataCollection.app/Contents/MacOS"
+mkdir assets
 cd "$directory"
 
+# copy assets into the compiled app
+cp -R "$directory"/assets/. "dist/AITracker-DataCollection.app/Contents/MacOS/assets/"
+
+# create a macOS dmg
 test -f Application-Installer.dmg && rm Application-Installer.dmg
 create-dmg \
   --volname "AITracker-DataCollection" \
