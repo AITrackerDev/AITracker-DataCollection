@@ -125,6 +125,16 @@ def update_camera():
         # flip image
         frame = cv2.flip(frame, 1)
         img_frame = frame
+        # convert the image to grayscale for better performance
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        # detect eyes in the frame
+        eyes = EYE_CASCADE.detectMultiScale(gray, scaleFactor=1.3, minNeighbors=5, minSize=(40, 20))
+        # draw rectangles around the eyes
+        for (ex, ey, ew, eh) in eyes:
+            if len(eyes) == 2:
+                pad = 10
+                cv2.rectangle(frame, (ex-pad, ey-pad), (ex+ew+pad, ey+eh+pad), (0, 255, 0), 2)
+        img_frame = frame
         img = ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(cv2.resize(frame, None, fx=WIDTH/frame.shape[1], fy=HEIGHT/frame.shape[0]), cv2.COLOR_BGR2RGB)))
         data_label.configure(image=img)
         data_label.image = img
