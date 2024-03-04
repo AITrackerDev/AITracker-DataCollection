@@ -5,7 +5,7 @@ a = Analysis(
     ['DataCollection.py'],
     pathex=[],
     binaries=[],
-    datas=[('./assets/dot.png', './assets/dot.png'), ('./assets/haarcascade_eye.xml', './assets/haarcascade_eye.xml'), ('./assets/shape_predictor_68_face_landmarks.dat', './assets/shape_predictor_68_face_landmarks.dat')],
+    datas=[('assets/*', 'assets')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -21,7 +21,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='DataCollection',
+    name='AITracker-DataCollection',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -37,7 +37,11 @@ exe = EXE(
 )
 app = BUNDLE(
     exe,
-    name='DataCollection.app',
+    name='AITracker-DataCollection.app',
     icon=None,
     bundle_identifier=None,
+    version='1.1.0',
+    info_plist={
+        'NSCameraUsageDescription':'The application needs access to the webcam in order to carry out the data collection process for our neural network.'
+    }
 )

@@ -19,3 +19,4 @@ env/
 setup.py
 build/
 dist/
+*.dmg

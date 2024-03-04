@@ -1,12 +1,11 @@
 #!/bin/sh
 
-pyinstaller \
-  --name 'AITracker-DataCollection' \
-  --onefile --windowed \
-  --add-data='./assets/dot.png':'./assets/dot.png' \
-  --add-data='./assets/haarcascade_eye.xml':'./assets/haarcascade_eye.xml' \
-  --add-data='./assets/shape_predictor_68_face_landmarks.dat':'./assets/shape_predictor_68_face_landmarks.dat' \
-  DataCollection.py
+pyinstaller AITracker-DataCollection.spec
+
+directory=$(PWD)
+cd dist
+rm AITracker-DataCollection
+cd "$directory"
 
 test -f Application-Installer.dmg && rm Application-Installer.dmg
 create-dmg \
