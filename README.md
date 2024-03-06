@@ -1,39 +1,33 @@
-# aiTracker Data Collection Application
+# AITracker Data Collection Application
 
 ## What is this?
+This is the data collection application for our neural network AITracker. The application takes pictures of the user looking in specific directions, in a format that is exactly what our neural network will see in the main application.
 
-This program is our application to collect our training data for our neural network. The premise of our network is to determine which direction the user is looking only using a standard webcam. As the data we need to collect is fairly specific, this application will assist us in getting the necessary data we need, as well as preprocess it for our needs.
-
-## Requirements
+## How to run as a user
 ### Windows
-If you are on Windows, the best way to install Python is by visiting [this website](https://www.python.org/downloads/windows/). The package manager pip comes installed automatically if downloaded from this website.
+1. Download the zip file in the releases section for Windows.
+2. Run the file named "AITracker-DataCollection.exe"
 
 ### MacOS
-As for MacOS, the easiest way to install Python is through Homebrew, which is a package manager for command line utilities and applications. The command to install it is
+Since macOS is a little troublesome to get an application running that's not signed (which is $99 a year!), we're going to have to do a little bit of 
+work to get everything to work in properly.
 
- `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"`. 
- 
- Once installed, run the command `brew install python3` and Python will be installed. Python should now be setup properly.
+1. First, download the zip file in the releases section for macOS. (IMAGES HERE)
+2. Second, once the zip has been downloaded, make sure it is on your desktop and double click it. (IMAGES HERE)
+3. Now you should see a folder with the same name as the zip file. (IMAGES HERE)
+4. Right click on the folder, go down to Services, and click "New Terminal at folder." (IMAGES HERE)
+5. Next, type in the following command `bash quarantine.sh` and hit enter. (IMAGES HERE)
+6. Once the script has finished running, go into the folder and double click on the file named "AITracker-DataCollection" and the app should start up! (IMAGES HERE)
 
-### Setup
-This project relies on a few different libraries installed via pip. The following commands will help set everything up quick and easy. We're going to create a virtual environment, activate it, and download all of the necessary requirements for the project with these 3 commands.
+Explanation on what the `quarantine.sh` script does: When a file is downloaded from the internet, macOS automatically applies a flag named "quarantine" to it, ensuring that it has the proper permissions to run, and essentially acts as a firewall to prevent malicious apps from running that aren't signed. What the script does is remove this quarantine flag, allowing the app to run normally, without having to pay Apple $99 a year to "sign" our app to verify it can be run on Macs.
 
-Create the virtual environment:
-`python3.8 -m venv env`
+## How to run as a developer
+####Ensure you have Python installed (this project was built in Python 3.11).
 
-Activate the virtual environment:
-`source env/bin/activate`
+Make a virtual environment: `python3.11 -m venv env`
 
-Install the necessary versions of the required packages:
-`pip install -r requirements.txt`
+Activate the virtual environment: `source env/bin/activate`
 
-On Windows, there may be an error regarding installing dlib. To fix this, [this article](https://medium.com/analytics-vidhya/how-to-install-dlib-library-for-python-in-windows-10-57348ba1117f) does a good job in explaining what goes wrong and how to fix it.
+Install required packages: `pip3 install -r requirements.txt`
 
-## How to run
-
-Run the command while in the directory of the project. The application will guide you from there.
-
-`python3 DataCollection.py`
-
-## Known bugs
-* On MacOS, the buttons in fullscreen are a little finicky, and may not respond immediately. This is a Tkinter problem, and not a bug we are in control of fixing. To remedy this, click in the app window a few times, or force click in the app window/button in order to get it to register.
+Run the script using: `python3.11 AITracker-DataCollection.py`
