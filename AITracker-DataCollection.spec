@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['DataCollection.py'],
+    ['AITracker-DataCollection.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets','assets')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
