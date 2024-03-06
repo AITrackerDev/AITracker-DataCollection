@@ -57,16 +57,16 @@ if __name__ == '__main__':
     # platform specific fixes
     if platform.system() == 'Windows':
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
-        
+    
+    # change directory to where this file is being ran so assets can be loaded after compiling
+    os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
+       
     # create directory for images
     if not os.path.isdir("images"):
         os.mkdir("images")
     else:
         shutil.rmtree("images")
         os.mkdir("images")
-    
-    # change directory to where this file is being ran so assets can be loaded after compiling
-    os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
 
     app = AITrackerDataCollection()
     app.mainloop()
