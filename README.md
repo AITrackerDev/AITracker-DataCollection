@@ -19,7 +19,7 @@ work to get everything to work in properly.
 5. Next, type in the following command `bash quarantine.sh` and hit enter. (IMAGES HERE)
 6. Once the script has finished running, go into the folder and double click on the file named "AITracker-DataCollection" and the app should start up! (IMAGES HERE)
 
-Explanation on what the `quarantine.sh` script does: When a file is downloaded from the internet, macOS automatically applies a flag named "quarantine" to it, ensuring that it has the proper permissions to run, and essentially acts as a firewall to prevent malicious apps from running that aren't signed. What the script does is remove this quarantine flag, allowing the app to run normally, without having to pay Apple $99 a year to "sign" our app to verify it can be run on Macs.
+Explanation on what the `quarantine.sh` script does: When a file is downloaded from the internet, macOS automatically applies a flag named "quarantine" to it, ensuring that it has the proper permissions to run, and essentially acts as a firewall to prevent malicious apps from running that aren't signed. What the script does is remove this quarantine flag, allowing the app to run normally, without having to pay Apple $99 a year to "sign" our app to verify it can be run on Macs. This script ONLY modifies this flag for files in this project, meaning that this won't affect any of your other files. In addition, the script will automatically delete itself once it has finished running.
 
 ## How to run as a developer
 ####Ensure you have Python installed (this project was built in Python 3.11).
