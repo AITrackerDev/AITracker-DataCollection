@@ -1,0 +1,12 @@
+altgraph==0.17.4
+customtkinter==5.2.2
+darkdetect==0.8.0
+dlib==19.24.2
+h5py==3.10.0
+macholib==1.16.3
+numpy==1.26.4
+opencv-python==4.9.0.80
+packaging==23.2
+pillow==10.2.0
+pyinstaller==6.4.0
+pyinstaller-hooks-contrib==2024.2
