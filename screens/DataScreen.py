@@ -15,10 +15,6 @@ class DataScreen(ctk.CTkFrame):
     
     def __init__(self, root, screen_changer):
         super().__init__(root, width=root.winfo_width(), height=root.winfo_height())
-        
-        temp_cam = cv2.VideoCapture(0)
-        temp_cam.release()
-        
         # variables for frame itself
         self._width, self._height = root.winfo_width(), root.winfo_height()
         self._screen_changer = screen_changer
