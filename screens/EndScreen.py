@@ -20,14 +20,14 @@ class EndScreen(ctk.CTkFrame):
         self._screen_changer = screen_changer
         
         h5path = self.createH5()
-        self.sendEmail(h5path)
+        #self.sendEmail(h5path)
         
         finished_text = ctk.CTkLabel(self, text="Thank you for helping us collect data for our neural network! If you can see this message, the application is safe to close.")
         finished_button = ctk.CTkButton(self, text="Quit", command=lambda: root.quit())
         finished_text.place(relx=.5, rely=.5, anchor=ctk.CENTER)
         finished_button.place(relx=.5, rely=.75, anchor=ctk.CENTER)
         
-        os.remove(h5path)
+        #os.remove(h5path)
     
     def createH5(self):
         # images and labels for h5 file
@@ -37,7 +37,9 @@ class EndScreen(ctk.CTkFrame):
         # loop through all images
         for filename in os.listdir('images'):
             if filename.startswith('g-') and filename.endswith('.png'):
-                images.append(cv2.imread(os.path.join('images', filename)))
+                # read in the image without adding other color channels
+                image = cv2.imread(os.path.join('images', filename), cv2.IMREAD_UNCHANGED)
+                images.append(image)
                 labels.append(os.path.splitext(filename)[0])
 
         # Convert the lists to NumPy arrays
