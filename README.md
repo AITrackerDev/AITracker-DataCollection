@@ -4,16 +4,23 @@
 This is the data collection application for our neural network AITracker. The application takes pictures of the user looking in specific directions, in a format that is exactly what our neural network will see in the main application.
 
 ## How to run as a user
+
+### Download Application
+
+1. Go to the releases section on GitHub.
+	* ![](md_images/releases.jpg)
+2. Select the download for your operating system (the first .zip file is for macOS, and the second is for Windows).
+	* ![](md_images/downloads.jpg)
+
 ### Windows
-1. Download the zip file in the releases section for Windows.
-2. Unzip it on your desktop and open the folder.
+1. Once the zip has been downloaded, make sure it is on your desktop and double click the zip file.
+2. You should see a folder with a similar name as the zip file, then open the folder.
 3. Run the file named "AITracker-DataCollection.exe"
 
 ### MacOS
 Since macOS is a little troublesome to get an application running that's not signed (which is $99 a year!), we're going to have to do a little bit of work to get everything to work in properly.
 
-1. First, download the zip file in the releases section for macOS. (IMAGES HERE)
-2. Second, once the zip has been downloaded, make sure it is on your desktop and double click the zip file. 
+1. Once the zip has been downloaded, make sure it is on your desktop and double click the zip file. 
 	* ![](md_images/zip.jpg)
 3. Now you should see a folder with the same name as the zip file. 
 	* ![](md_images/folder.jpg)
